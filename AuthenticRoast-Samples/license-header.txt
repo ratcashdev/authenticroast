@@ -1,0 +1,13 @@
+   Copyright (C) 2007-2010 Aike J Sommer (http://aikesommer.name/)
+
+   This file is part of AuthenticRoast.
+
+   This file is just a sample. You are free to use and modify the
+   code in this file to your liking!
+
+   This file is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+   You can reach the author and get more information about this
+   project at: http://aikesommer.name/

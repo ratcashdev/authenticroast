@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>name.aikesommer</groupId>
+    <artifactId>AuthenticRoast</artifactId>
+    <version>0.3.0</version>
+    <name>AuthenticRoast</name>
+    <packaging>pom</packaging>
+    <url>http://aikesommer.name/</url>
+    <build>
+        <extensions>
+            <extension>
+                <groupId>org.jvnet.wagon-svn</groupId>
+                <artifactId>wagon-svn</artifactId>
+                <version>1.8</version>
+            </extension>
+        </extensions>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.5</source>
+                    <target>1.5</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.google.code.maven-license-plugin</groupId>
+                <artifactId>maven-license-plugin</artifactId>
+                <version>1.4.0</version>
+                <configuration>
+                    <header>license-header.txt</header>
+                    <excludes>
+                        <exclude>*gpl-*.txt</exclude>
+                    </excludes>
+                    <useDefaultExcludes>true</useDefaultExcludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+    <modules>
+        <module>AuthenticRoast-API</module>
+        <module>AuthenticRoast-Impl</module>
+        <module>AuthenticRoast-Extras</module>
+        <module>AuthenticRoast-Samples</module>
+    </modules>
+    <repositories>
+        <repository>
+            <id>maven2-repository.dev.java.net</id>
+            <name>Java.net Repository for Maven</name>
+            <url>http://download.java.net/maven/2/</url>
+        </repository>
+        <repository>
+            <id>glassfish-repository</id>
+            <name>Java.net Repository for Glassfish</name>
+            <url>http://download.java.net/maven/glassfish</url>
+        </repository>
+    </repositories>
+    <distributionManagement>
+        <repository>
+            <id>authenticroast-releases</id>
+            <name>AuthenticRoast Repository - Releases</name>
+            <url>svn:https://authenticroast.googlecode.com/svn/maven2/releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>authenticroast-snapshots</id>
+            <name>AuthenticRoast Repository - Snapshots</name>
+            <url>svn:https://authenticroast.googlecode.com/svn/maven2/snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
+    <scm>
+        <connection>scm:svn:http://authenticroast.googlecode.com/svn/</connection>
+        <developerConnection>scm:svn:https://authenticroast.googlecode.com/svn/</developerConnection>
+    </scm>
+</project>
