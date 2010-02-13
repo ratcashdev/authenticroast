@@ -8,7 +8,7 @@
     <artifactId>AuthenticRoast-Impl</artifactId>
     <version>0.3.1-SNAPSHOT</version>
     <name>AuthenticRoast-Impl</name>
-    <url>http://aikesommer.name/</url>
+    <url>http://code.google.com/p/authenticroast/</url>
     <dependencies>
         <dependency>
             <groupId>javax.servlet</groupId>

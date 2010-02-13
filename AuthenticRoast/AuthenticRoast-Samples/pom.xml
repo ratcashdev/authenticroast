@@ -10,7 +10,7 @@
     <artifactId>AuthenticRoast-Samples</artifactId>
     <version>0.3.1-SNAPSHOT</version>
     <name>AuthenticRoast-Samples</name>
-    <url>http://aikesommer.name/</url>
+    <url>http://code.google.com/p/authenticroast/</url>
     <dependencies>
         <dependency>
             <groupId>name.aikesommer</groupId>

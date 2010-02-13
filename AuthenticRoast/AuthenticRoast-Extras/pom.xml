@@ -8,7 +8,7 @@
     <artifactId>AuthenticRoast-Extras</artifactId>
     <version>0.3.1-SNAPSHOT</version>
     <name>AuthenticRoast-Extras</name>
-    <url>http://aikesommer.name/</url>
+    <url>http://code.google.com/p/authenticroast/</url>
     <dependencies>
         <dependency>
             <groupId>name.aikesommer</groupId>

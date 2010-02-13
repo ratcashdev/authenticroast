@@ -101,12 +101,21 @@ public class Registry {
             if (authenticator == null) {
                 String name = context.getInitParameter("roast.authenticator.class");
 //                context.
-                Class<? extends PluggableAuthenticator> c;
-                if (resolver == null) {
-                    c = (Class<? extends PluggableAuthenticator>) Class.forName(name);
-                } else {
-                    c = (Class<? extends PluggableAuthenticator>) resolver.resolve(context).loadClass(name);
+                Class<? extends PluggableAuthenticator> c = null;
+                if (resolver != null) {
+                    try {
+                        c = (Class<? extends PluggableAuthenticator>) resolver.resolve(context).loadClass(name);
+                    } catch (ClassNotFoundException ex) {
+                    }
                 }
+                if (c == null) {
+                    try {
+                        c = (Class<? extends PluggableAuthenticator>) Thread.currentThread().getContextClassLoader().loadClass(name);
+                    } catch (ClassNotFoundException ex) {
+                        c = (Class<? extends PluggableAuthenticator>) Class.forName(name);
+                    }
+                }
+                
                 authenticator = c.newInstance();
                 register(authenticator);
             }

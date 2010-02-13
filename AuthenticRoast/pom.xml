@@ -6,7 +6,7 @@
     <version>0.3.1-SNAPSHOT</version>
     <name>AuthenticRoast</name>
     <packaging>pom</packaging>
-    <url>http://aikesommer.name/</url>
+    <url>http://code.google.com/p/authenticroast/</url>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding> 
     </properties>
