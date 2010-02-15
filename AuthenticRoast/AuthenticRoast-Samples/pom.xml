@@ -4,23 +4,23 @@
     <parent>
         <artifactId>AuthenticRoast</artifactId>
         <groupId>name.aikesommer</groupId>
-        <version>0.3.1</version>
+        <version>0.3.2-SNAPSHOT</version>
     </parent>
     <groupId>name.aikesommer</groupId>
     <artifactId>AuthenticRoast-Samples</artifactId>
-    <version>0.3.1</version>
+    <version>0.3.2-SNAPSHOT</version>
     <name>AuthenticRoast-Samples</name>
     <url>http://code.google.com/p/authenticroast/</url>
     <dependencies>
         <dependency>
             <groupId>name.aikesommer</groupId>
             <artifactId>AuthenticRoast-Extras</artifactId>
-            <version>0.3.1</version>
+            <version>0.3.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>name.aikesommer</groupId>
             <artifactId>AuthenticRoast-API</artifactId>
-            <version>0.3.1</version>
+            <version>0.3.2-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
