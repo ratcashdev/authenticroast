@@ -25,8 +25,6 @@ package name.aikesommer.authenticator;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -44,23 +42,28 @@ import javax.servlet.http.HttpServletResponse;
 import name.aikesommer.authenticator.AuthenticationRequest.ManageAction;
 import name.aikesommer.authenticator.AuthenticationRequest.Status;
 
+
 /**
  * This is the main class called by the container. You probably dont wanna
  * call this class directly.
  * 
  * @author Aike J Sommer
  */
-public class AuthModule implements ServerAuthModule, PluggableAuthenticator.AuthenticationManager {
+public class AuthModule extends AuthenticationManagerBase implements ServerAuthModule,
+        PluggableAuthenticator.AuthenticationManager {
 
     private CallbackHandler handler;
-    private Map options;
-    private MessagePolicy responsePolicy;
-    private MessagePolicy requestPolicy;
-    private boolean success;
-    private Logger log = Logger.getLogger(getClass().getName());
-    private RequestHandler requestHandler = new RequestHandler();
 
-    public void initialize(MessagePolicy requestPolicy, MessagePolicy responsePolicy, CallbackHandler handler, Map options) throws AuthException {
+    private Map options;
+
+    private MessagePolicy responsePolicy;
+
+    private MessagePolicy requestPolicy;
+
+    private boolean success;
+
+    public void initialize(MessagePolicy requestPolicy, MessagePolicy responsePolicy,
+            CallbackHandler handler, Map options) throws AuthException {
         this.requestPolicy = requestPolicy;
         this.responsePolicy = responsePolicy;
         this.handler = handler;
@@ -72,16 +75,25 @@ public class AuthModule implements ServerAuthModule, PluggableAuthenticator.Auth
         return null;
     }
 
-    public AuthStatus validateRequest(MessageInfo info, Subject clientSubject, Subject serviceSubject) throws AuthException {
+    public AuthStatus validateRequest(MessageInfo info, Subject clientSubject,
+            Subject serviceSubject) throws AuthException {
         HttpServletRequest request = (HttpServletRequest) info.getRequestMessage();
         HttpServletResponse response = (HttpServletResponse) info.getResponseMessage();
         ServletContext context = request.getSession().getServletContext();
-        Registry registry = Registry.forContext(context);
+        RegistryImpl registry = RegistryImpl.forContext(context);
+
+        JSR196Request authReq = new AuthenticationRequestImpl.JSR196(request, response,
+                clientSubject, requestPolicy.isMandatory(), registry.isCrossContext());
+        registry.createPrincipalStore(authReq);
+
+        /**
+         * Find the authenticator for this application.
+         */
+        PluggableAuthenticator authenticator = registry.authenticator();
+
+        boolean finished = false;
         try {
-            /**
-             * Find the authenticator for this application.
-             */
-            PluggableAuthenticator authenticator = registry.authenticator();
+            authenticator.begin(this, authReq);
 
             /**
              * Check wether we already authenticated the user. In that case we
@@ -90,16 +102,16 @@ public class AuthModule implements ServerAuthModule, PluggableAuthenticator.Auth
              * We will call manage() in our authenticator to be able to logout
              * and such things.
              */
-            SimplePrincipal simplePrincipal = registry.principalStore(request.getSession()).fetch();
+            SimplePrincipal simplePrincipal = registry.principalStore().fetch();
             if (simplePrincipal != null) {
-                ManageAction action = authenticator.manage(this, new AuthenticationRequestImpl.JSR196(request, response, clientSubject, requestPolicy.isMandatory()));
+                ManageAction action = authenticator.manage(this, authReq);
                 switch (action) {
                     case None:
                         createPrincipal(simplePrincipal, clientSubject);
                         success = true;
                         return AuthStatus.SUCCESS;
                     case Clear:
-                        registry.principalStore(request.getSession()).invalidate();
+                        registry.principalStore().invalidate();
                         return AuthStatus.SEND_CONTINUE;
                 }
             }
@@ -109,7 +121,7 @@ public class AuthModule implements ServerAuthModule, PluggableAuthenticator.Auth
              * that now. The actual process of authentication will be done 
              * by the authenticator class in our web-app.
              */
-            Status status = authenticator.tryAuthenticate(this, new AuthenticationRequestImpl.JSR196(request, response, clientSubject, requestPolicy.isMandatory()));
+            Status status = authenticator.tryAuthenticate(this, authReq);
 
             switch (status) {
                 case Success:
@@ -120,7 +132,7 @@ public class AuthModule implements ServerAuthModule, PluggableAuthenticator.Auth
                         success = true;
                         return AuthStatus.SUCCESS;
                     }
-                    status = authenticator.authenticate(this, new AuthenticationRequestImpl.JSR196(request, response, clientSubject, requestPolicy.isMandatory()));
+                    status = authenticator.authenticate(this, authReq);
                     if (status == Status.Success) {
                         success = true;
                         return AuthStatus.SUCCESS;
@@ -133,6 +145,8 @@ public class AuthModule implements ServerAuthModule, PluggableAuthenticator.Auth
                     throw new IllegalArgumentException("dont know how to handle " + status);
             }
         } catch (Exception ex) {
+            finished = true;
+            authenticator.abort(this, authReq, ex);
             ex.printStackTrace();
             try {
                 response.sendError(response.SC_INTERNAL_SERVER_ERROR, ex.getMessage());
@@ -141,6 +155,10 @@ public class AuthModule implements ServerAuthModule, PluggableAuthenticator.Auth
             }
 
             return AuthStatus.FAILURE;
+        } finally {
+            if (!finished) {
+                authenticator.finish(this, authReq);
+            }
         }
     }
 
@@ -158,63 +176,27 @@ public class AuthModule implements ServerAuthModule, PluggableAuthenticator.Auth
      * @param simplePrincipal The SimplePrincipal representing the authenticated
      *          user.
      */
-    private void createPrincipal(SimplePrincipal simplePrincipal, Subject clientSubject) throws IOException, UnsupportedCallbackException {
+    private void createPrincipal(SimplePrincipal simplePrincipal, Subject clientSubject) throws
+            IOException, UnsupportedCallbackException {
         clientSubject.getPrincipals().add(simplePrincipal);
 
-        CallerPrincipalCallback callerCallback = new CallerPrincipalCallback(clientSubject, simplePrincipal);
-        GroupPrincipalCallback groupCallback = new GroupPrincipalCallback(clientSubject, simplePrincipal.getGroups().toArray(new String[0]));
+        CallerPrincipalCallback callerCallback = new CallerPrincipalCallback(clientSubject,
+                simplePrincipal);
+        GroupPrincipalCallback groupCallback = new GroupPrincipalCallback(clientSubject, simplePrincipal.getGroups().toArray(
+                new String[0]));
 
         handler.handle(new Callback[]{callerCallback, groupCallback});
     }
 
-    public void saveRequest(AuthenticationRequest request) {
-        requestHandler.saveRequest(request);
-    }
-
-    public void clearRequest(AuthenticationRequest request) {
-        requestHandler.clearRequest(request);
-    }
-
-    public void forward(AuthenticationRequest authRequest, String path) {
-        ServletContext sc = authRequest.getServletContext();
-        try {
-            authRequest.getHttpServletResponse().sendRedirect(
-                    sc.getContextPath() + path);
-        } catch (Throwable t) {
-            log.severe("unexpected error forwarding or redirecting to " + path + ": " + t);
-            log.log(Level.FINE, "unexpected error forwarding or redirecting to " + path, t);
-        }
-    }
-
+    @Override
     public void register(AuthenticationRequest request, SimplePrincipal simplePrincipal) {
         try {
-            createPrincipal(simplePrincipal, ((AuthenticationRequestImpl.JSR196)request).getClientSubject());
-            Registry.forContext(request.getServletContext()).principalStore(request.getHttpServletRequest().getSession()).store(simplePrincipal);
+            createPrincipal(simplePrincipal, ((JSR196Request) request).getClientSubject());
+//            RegistryImpl.forContext(request.getServletContext()).principalStore(request.getHttpServletRequest().getSession()).store(simplePrincipal);
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
-    }
-
-    public void restoreRequest(AuthenticationRequest request) {
-        requestHandler.restoreRequest(request);
-    }
-
-    public void redirectToRequest(AuthenticationRequest request) {
-        String path = requestHandler.getPathForRequest(request);
-
-        if (path != null) {
-            forward(request, path);
-        } else {
-            throw new IllegalStateException();
-        }
-    }
-
-    public boolean matchesRequest(AuthenticationRequest request) {
-        return requestHandler.matchesRequest(request);
-    }
-
-    public void addQueryString(AuthenticationRequest request, String queryString) {
-        requestHandler.addQueryString(request, queryString);
+        super.register(request, simplePrincipal);
     }
 
 }

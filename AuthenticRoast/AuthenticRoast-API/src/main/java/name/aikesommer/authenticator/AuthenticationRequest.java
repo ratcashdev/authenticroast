@@ -112,6 +112,21 @@ public interface AuthenticationRequest {
     Map<String, Object> getSessionMap();
 
     /**
+     * Get a map containing all application attributes.
+     * Changes to this map will be reflected in the application attributes.
+     *
+     * @return A map representing all application attributes.
+     */
+    Map<String, Object> getApplicationMap();
+
+    /**
+     * This map can be used to store values across authentication-requests.
+     *
+     * @return A map for storing authentication values.
+     */
+    Map<String, Object> getAuthenticationMap();
+
+    /**
      * Get whether authentication is mandatory for the current request.
      * If authentication is not mandatory the authenticator can still return
      * Success to signal that the resource should be served anyways.

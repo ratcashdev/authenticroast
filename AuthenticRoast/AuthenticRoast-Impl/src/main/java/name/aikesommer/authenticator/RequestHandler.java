@@ -25,6 +25,7 @@ package name.aikesommer.authenticator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This class takes care of storing and restoring the original request, that
@@ -35,25 +36,37 @@ import java.util.List;
  */
 public class RequestHandler {
 
-    private static final String REQUEST_PATH_NOTE = "name.aikesommer.Authenticator.REQUEST_PATH";
-    private static final String REQUEST_QUERY_NOTE = "name.aikesommer.Authenticator.REQUEST_QUERY";
-    private static final String REQUEST_ADD_QUERY_NOTE = "name.aikesommer.Authenticator.REQUEST_ADD_QUERY";
+    private static final String REQUEST_CONTEXT_NOTE = RequestHandler.class.getName() + ".REQUEST_CONTEXT";
+    private static final String REQUEST_PATH_NOTE = RequestHandler.class.getName() + ".REQUEST_PATH";
+    private static final String REQUEST_QUERY_NOTE = RequestHandler.class.getName() + ".REQUEST_QUERY";
+    private static final String REQUEST_ADD_QUERY_NOTE = RequestHandler.class.getName() + ".REQUEST_ADD_QUERY";
 
-    public void saveRequest(AuthenticationRequest request) {
-        request.getSessionMap().put(REQUEST_PATH_NOTE, request.getRequestPath());
-        request.getSessionMap().put(REQUEST_QUERY_NOTE, request.getHttpServletRequest().getQueryString());
+    private Map<String, Object> session(AuthenticationRequest request) {
+        return request.getAuthenticationMap();
+    }
+
+    public void saveRequest(ModifiableRequest request) {
+        session(request).put(REQUEST_CONTEXT_NOTE, request.getOriginalContext().getContextPath());
+        session(request).put(REQUEST_PATH_NOTE, request.getRequestPath());
+        session(request).put(REQUEST_QUERY_NOTE, request.getHttpServletRequest().getQueryString());
     }
 
     public void clearRequest(AuthenticationRequest request) {
-        request.getSessionMap().remove(REQUEST_PATH_NOTE);
-        request.getSessionMap().remove(REQUEST_QUERY_NOTE);
+        session(request).remove(REQUEST_CONTEXT_NOTE);
+        session(request).remove(REQUEST_PATH_NOTE);
+        session(request).remove(REQUEST_QUERY_NOTE);
+    }
+
+    public String getContextForRequest(AuthenticationRequest request) {
+        String context = (String) session(request).get(REQUEST_CONTEXT_NOTE);
+        return context;
     }
 
     public String getPathForRequest(AuthenticationRequest request) {
-        String path = (String) request.getSessionMap().get(REQUEST_PATH_NOTE);
-        String query = (String) request.getSessionMap().get(REQUEST_QUERY_NOTE);
+        String path = (String) session(request).get(REQUEST_PATH_NOTE);
+        String query = (String) session(request).get(REQUEST_QUERY_NOTE);
 
-        List<String> addQuery = (List<String>) request.getSessionMap().get(REQUEST_ADD_QUERY_NOTE);
+        List<String> addQuery = (List<String>) session(request).get(REQUEST_ADD_QUERY_NOTE);
         if (addQuery != null) {
             for (String q : addQuery) {
                 query = query == null ? q : (query + "&" + q);
@@ -66,12 +79,14 @@ public class RequestHandler {
         return null;
     }
 
-    public boolean matchesRequest(AuthenticationRequest request) {
-        String originalPath = (String) request.getSessionMap().get(REQUEST_PATH_NOTE);
+    public boolean matchesRequest(ModifiableRequest request) {
+        String originalPath = (String) session(request).get(REQUEST_PATH_NOTE);
         String path = request.getRequestPath();
+        String originalContext = (String) session(request).get(REQUEST_CONTEXT_NOTE);
+        String context = request.getOriginalContext().getContextPath();
 
-        if (originalPath != null) {
-            return path.equals(originalPath);
+        if (originalPath != null && originalContext != null) {
+            return path.equals(originalPath) && context.equals(originalContext);
         }
 
         return false;
@@ -82,10 +97,10 @@ public class RequestHandler {
     }
 
     public void addQueryString(AuthenticationRequest request, String queryString) {
-        List<String> addQuery = (List) request.getSessionMap().get(REQUEST_ADD_QUERY_NOTE);
+        List<String> addQuery = (List) session(request).get(REQUEST_ADD_QUERY_NOTE);
         if (addQuery == null) {
             addQuery = new ArrayList<String>();
-            request.getSessionMap().put(REQUEST_ADD_QUERY_NOTE, addQuery);
+            session(request).put(REQUEST_ADD_QUERY_NOTE, addQuery);
         }
         addQuery.add(queryString);
     }

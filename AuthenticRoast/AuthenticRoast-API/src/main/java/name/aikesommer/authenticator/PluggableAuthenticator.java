@@ -33,14 +33,39 @@ package name.aikesommer.authenticator;
 public abstract class PluggableAuthenticator {
 
     /**
-     * TODO: Diese 3 Methoden funktionieren bisher nur im Tomcat
+     * This method will be called prior to any of the actual authentication
+     * or management methods.
+     *
+     * @param manager The AuthenticationManager that allows for access
+     *                to some common actions while doing authentication.
+     * @param request The AuthenticationRequest encapsulating all data
+     *                needed to perform authentication.
      */
     public void begin(AuthenticationManager manager, AuthenticationRequest request) {
     }
 
+    /**
+     * This method will be called after the process has been completed.
+     * It will not be called in the case of an exception though.
+     *
+     * @param manager The AuthenticationManager that allows for access
+     *                to some common actions while doing authentication.
+     * @param request The AuthenticationRequest encapsulating all data
+     *                needed to perform authentication.
+     */
     public void finish(AuthenticationManager manager, AuthenticationRequest request) {
     }
 
+    /**
+     * This method will be called in the case of an exception.
+     *
+     * @param manager The AuthenticationManager that allows for access
+     *                to some common actions while doing authentication.
+     * @param request The AuthenticationRequest encapsulating all data
+     *                needed to perform authentication.
+     * @param cause The exception that caused the authentication process
+     *              to be aborted.
+     */
     public void abort(AuthenticationManager manager, AuthenticationRequest request, Throwable cause) {
     }
 

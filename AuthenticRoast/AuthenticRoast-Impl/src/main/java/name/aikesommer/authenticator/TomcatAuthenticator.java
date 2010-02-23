@@ -26,11 +26,8 @@ package name.aikesommer.authenticator;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.security.Principal;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import name.aikesommer.authenticator.AuthenticationRequest.ManageAction;
 import org.apache.catalina.Authenticator;
 import org.apache.catalina.Container;
 import org.apache.catalina.Context;
@@ -45,16 +42,17 @@ import org.apache.catalina.deploy.SecurityConstraint;
 import org.apache.catalina.realm.GenericPrincipal;
 import org.apache.catalina.valves.ValveBase;
 
+
 /**
  * This is the main class called by the container. You probably dont wanna
  * call this class directly.
  * 
  * @author Aike J Sommer
  */
-public class TomcatAuthenticator extends ValveBase implements Authenticator, PluggableAuthenticator.AuthenticationManager {
+public class TomcatAuthenticator extends ValveBase implements Authenticator {
 
     static {
-        Registry.setResolver(new ClassLoaderResolver() {
+        RegistryImpl.setResolver(new ClassLoaderResolver() {
 
             public ClassLoader resolve(ServletContext context) {
                 try {
@@ -75,71 +73,78 @@ public class TomcatAuthenticator extends ValveBase implements Authenticator, Plu
                     throw new RuntimeException(ex);
                 }
             }
+
         });
     }
+
     private Context context;
-    private Logger log = Logger.getLogger(getClass().getName());
-    private RequestHandler requestHandler = new RequestHandler();
 
-    public void saveRequest(AuthenticationRequest request) {
-        requestHandler.saveRequest(request);
-    }
+    private AuthenticationManagerBase manager = new AuthenticationManagerBase() {
 
-    public void clearRequest(AuthenticationRequest request) {
-        requestHandler.clearRequest(request);
-    }
-
-    public void forward(AuthenticationRequest authRequest, String path) {
-        ServletContext sc = authRequest.getServletContext();
-        try {
-            authRequest.getHttpServletResponse().sendRedirect(sc.getContextPath() + path);
-            ((AuthenticationRequestImpl) authRequest).setForwarded(true);
-        } catch (Throwable t) {
-            log.severe("unexpected error forwarding or redirecting to " + path +
-                    ": " + t);
-            log.log(Level.FINE,
-                    "unexpected error forwarding or redirecting to " + path, t);
+        @Override
+        public void register(AuthenticationRequest request, SimplePrincipal simplePrincipal) {
+            TomcatAuthenticator.this.register(request, simplePrincipal);
+            super.register(request, simplePrincipal);
         }
-    }
 
-    public void register(AuthenticationRequest request,
+    };
+
+//    public void saveRequest(AuthenticationRequest request) {
+//        requestHandler.saveRequest(request);
+//    }
+//
+//    public void clearRequest(AuthenticationRequest request) {
+//        requestHandler.clearRequest(request);
+//    }
+//
+//    public void forward(AuthenticationRequest authRequest, String path) {
+//        ServletContext sc = authRequest.getServletContext();
+//        try {
+//            authRequest.getHttpServletResponse().sendRedirect(sc.getContextPath() + path);
+//            ((ModifiableRequest) authRequest).setForwarded(true);
+//        } catch (Throwable t) {
+//            log.severe("unexpected error forwarding or redirecting to " + path +
+//                    ": " + t);
+//            log.log(Level.FINE,
+//                    "unexpected error forwarding or redirecting to " + path, t);
+//        }
+//    }
+    protected void register(AuthenticationRequest request,
             SimplePrincipal simplePrincipal) {
         try {
-            Registry.forContext(request.getServletContext()).principalStore(request.
-                    getHttpServletRequest().getSession()).store(simplePrincipal);
+//            RegistryImpl.forContext(request.getServletContext()).principalStore(request.
+//                    getHttpServletRequest().getSession()).store(simplePrincipal);
 
-            AuthenticationRequestImpl.Tomcat6 req =
-                    (AuthenticationRequestImpl.Tomcat6) request;
+            Tomcat6Request req =
+                    (Tomcat6Request) request;
             req.getCatalinaRequest().setAuthType("ROAST");
             req.getCatalinaRequest().setUserPrincipal(simplePrincipal);
             Session session = req.getCatalinaRequest().getSessionInternal(true);
             session.setAuthType("ROAST");
             session.setPrincipal(simplePrincipal);
-            session.setNote(Constants.SESS_USERNAME_NOTE, simplePrincipal.
-                    getName());
+            session.setNote(Constants.SESS_USERNAME_NOTE, simplePrincipal.getName());
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
     }
 
-    public void restoreRequest(AuthenticationRequest request) {
-        requestHandler.restoreRequest(request);
-    }
-
-    public void redirectToRequest(AuthenticationRequest request) {
-        String path = requestHandler.getPathForRequest(request);
-
-        if (path != null) {
-            forward(request, path);
-        } else {
-            throw new IllegalStateException();
-        }
-    }
-
-    public boolean matchesRequest(AuthenticationRequest request) {
-        return requestHandler.matchesRequest(request);
-    }
-
+//    public void restoreRequest(AuthenticationRequest request) {
+//        requestHandler.restoreRequest(request);
+//    }
+//
+//    public void redirectToRequest(AuthenticationRequest request) {
+//        String path = requestHandler.getPathForRequest(request);
+//
+//        if (path != null) {
+//            forward(request, path);
+//        } else {
+//            throw new IllegalStateException();
+//        }
+//    }
+//
+//    public boolean matchesRequest(AuthenticationRequest request) {
+//        return requestHandler.matchesRequest(request);
+//    }
     @Override
     public void setContainer(Container container) {
         this.context = (Context) container;
@@ -154,8 +159,8 @@ public class TomcatAuthenticator extends ValveBase implements Authenticator, Plu
 
         for (int i = 0; i < constraints.length; i++) {
             SecurityConstraint constraint = constraints[i];
-            String[] roles = constraint.getAllRoles() ? context.
-                    findSecurityRoles() : constraint.findAuthRoles();
+            String[] roles = constraint.getAllRoles() ? context.findSecurityRoles()
+                    : constraint.findAuthRoles();
             if (roles == null) {
                 roles = new String[0];
             }
@@ -195,30 +200,41 @@ public class TomcatAuthenticator extends ValveBase implements Authenticator, Plu
             request.setCharacterEncoding("UTF-8");
         }
 
-        Registry registry = Registry.forContext(request.getContext().
-                getServletContext());
-        PluggableAuthenticator authenticator = registry.authenticator();
-
         Realm realm = context.getRealm();
         SecurityConstraint[] constraints =
                 realm.findSecurityConstraints(request, this.context);
+
+        RegistryImpl registry = RegistryImpl.forContext(request.getContext().
+                getServletContext());
+        Tomcat6Request authReq =
+                new AuthenticationRequestImpl.Tomcat6(request, response,
+                constraints != null, registry.isCrossContext());
+        registry.createPrincipalStore(authReq);
+
+        PluggableAuthenticator authenticator = registry.authenticator();
 
         if (!realm.hasUserDataPermission(request, response,
                 constraints)) {
             return;
         }
 
-        AuthenticationRequestImpl.Tomcat6 authReq =
-                new AuthenticationRequestImpl.Tomcat6(request, response,
-                constraints != null);
-        authenticator.begin(this, authReq);
+        if (authenticator == null) {
+            if (constraints == null) {
+                getNext().invoke(request, response);
+                return;
+            } else {
+                response.setStatus(Response.SC_FORBIDDEN);
+                return;
+            }
+        }
+
+        authenticator.begin(manager, authReq);
 
         boolean finished = false;
         try {
-            SimplePrincipal simplePrincipal = registry.principalStore(request.
-                    getSession()).fetch();
+            SimplePrincipal simplePrincipal = registry.principalStore().fetch();
             if (simplePrincipal != null) {
-                ManageAction action = authenticator.manage(this, authReq);
+                AuthenticationRequest.ManageAction action = authenticator.manage(manager, authReq);
                 switch (action) {
                     case None:
                         register(authReq, simplePrincipal);
@@ -228,67 +244,66 @@ public class TomcatAuthenticator extends ValveBase implements Authenticator, Plu
                             return;
                         }
 
-                        authenticator.finish(this, authReq);
+                        authenticator.finish(manager, authReq);
                         finished = true;
                         getNext().invoke(request, response);
                         return;
                     case Clear:
-                        registry.principalStore(request.getSession()).invalidate();
+                        registry.principalStore().invalidate();
                         if (authReq.isForwarded()) {
                             return;
                         }
                 }
             }
 
-            if (constraints == null && authenticator == null) {
-                authenticator.finish(this, authReq);
-                finished = true;
-                getNext().invoke(request, response);
-                return;
-            } else if (authenticator != null) {
-                switch (authenticator.tryAuthenticate(this, authReq)) {
-                    case Continue:
-                        return;
-                    case Failure:
-                        response.setStatus(Response.SC_UNAUTHORIZED);
-                        return;
-                    case None:
-                        if (constraints != null) {
-                            switch (authenticator.authenticate(this, authReq)) {
-                                case Continue:
-                                    return;
-                                case Success:
-                                    break;
-                                default:
-                                    response.setStatus(Response.SC_UNAUTHORIZED);
-                                    return;
-                            }
+//            if (constraints == null && authenticator == null) {
+//                authenticator.finish(manager, authReq);
+//                finished = true;
+//                getNext().invoke(request, response);
+//                return;
+//            } else if (authenticator != null) {
+            switch (authenticator.tryAuthenticate(manager, authReq)) {
+                case Continue:
+                    return;
+                case Failure:
+                    response.setStatus(Response.SC_FORBIDDEN);
+                    return;
+                case None:
+                    if (constraints != null) {
+                        switch (authenticator.authenticate(manager, authReq)) {
+                            case Continue:
+                                return;
+                            case Success:
+                                break;
+                            default:
+                                response.setStatus(Response.SC_FORBIDDEN);
+                                return;
                         }
-                }
-            } else {
-                response.setStatus(Response.SC_UNAUTHORIZED);
-                return;
+                    }
             }
+//            } else {
+//                response.setStatus(Response.SC_UNAUTHORIZED);
+//                return;
+//            }
 
-            simplePrincipal = registry.principalStore(request.getSession()).
-                    fetch();
+            simplePrincipal = registry.principalStore().fetch();
             if (!checkRoles(request, response, constraints, simplePrincipal)) {
                 return;
             }
         } catch (Throwable t) {
             finished = true;
-            authenticator.abort(this, authReq, t);
+            authenticator.abort(manager, authReq, t);
             throw new RuntimeException(t);
         } finally {
             if (!finished) {
-                authenticator.finish(this, authReq);
+                authenticator.finish(manager, authReq);
             }
         }
 
         getNext().invoke(request, response);
     }
 
-    public void addQueryString(AuthenticationRequest request, String queryString) {
-        requestHandler.addQueryString(request, queryString);
-    }
+//    public void addQueryString(AuthenticationRequest request, String queryString) {
+//        requestHandler.addQueryString(request, queryString);
+//    }
 }

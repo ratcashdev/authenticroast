@@ -27,6 +27,7 @@ import java.security.Principal;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 /**
@@ -39,17 +40,30 @@ import javax.servlet.http.HttpSession;
 public class SimplePrincipal implements Principal {
 
     /**
-     * Use this to access the current authenticated principal, if you need 
+     * Use this to access the current authenticated principal, if you need
      * access to any of the information in your sub-class.
-     * 
+     *
+     * @deprecated
      * @param session The current session as in HttpServletRequest.getSession()
      * @return The previously authenticated SimplePrincipal instance for this
      *         session.
      */
     public static SimplePrincipal getPrincipal(HttpSession session) {
-        return Registry.forContext(session.getServletContext()).principalStore(session).fetch();
+        return Registry.forContext(session.getServletContext()).principalStore().fetch();
     }
-    
+
+    /**
+     * Use this to access the current authenticated principal, if you need
+     * access to any of the information in your sub-class.
+     *
+     * @param session The current session as in HttpServletRequest.getSession()
+     * @return The previously authenticated SimplePrincipal instance for this
+     *         session.
+     */
+    public static SimplePrincipal getPrincipal(HttpServletRequest request) {
+        return Registry.forContext(request.getSession().getServletContext()).principalStore().fetch();
+    }
+
     
     private String name;
     private Set<String> groups = new HashSet();

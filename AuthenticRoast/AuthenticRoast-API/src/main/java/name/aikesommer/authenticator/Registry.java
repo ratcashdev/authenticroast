@@ -23,31 +23,19 @@
  */
 package name.aikesommer.authenticator;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.lang.reflect.Method;
 import javax.servlet.ServletContext;
-import javax.servlet.http.HttpSession;
+
 
 /**
  * Allows web-applications to register a PluggableAuthenticator to use
  * for requests to its resources.
  * You can also specify the class as init-parameter
  * <code>roast.authenticator.class</code>.
- * 
+ *
  * @author Aike J Sommer
  */
-public class Registry {
-
-    private static final String AUTHENTICATOR_NOTE = Registry.class.getName() + ".AUTHENTICATOR";
-    private static final String PRINCIPALSTORE_NOTE = Registry.class.getName() + ".PRINCIPALSTORE";
-
-    private static ClassLoaderResolver resolver = null;
-
-    protected static void setResolver(ClassLoaderResolver resolver) {
-        Registry.resolver = resolver;
-    }
-
-    private ServletContext context;
+public abstract class Registry {
 
     /**
      * Create or find an instance that will use context to store the
@@ -56,77 +44,30 @@ public class Registry {
      * @param context The ServletContext instance for the current web-app.
      */
     public static Registry forContext(ServletContext context) {
-        return new Registry(context);
+        try {
+            Class c = Registry.class.getClassLoader().loadClass(
+                    "name.aikesommer.authenticator.RegistryImpl");
+            Method m = c.getDeclaredMethod("forContext", ServletContext.class);
+            return (Registry) m.invoke(null, context);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+
     }
-    
-    /**
-     * Create an instance that will use context to store the authenticator
-     * class.
-     * 
-     * @param context The ServletContext instance for the current web-app.
-     */
-    private Registry(ServletContext context) {
-        this.context = context;
-    }
-    
+
     /**
      * Register a as authenticator for this Web-App.
      *
      * @param a The PluggableAuthenticator to use for this web-app.
      */
-    public void register(PluggableAuthenticator a) {
-        context.setAttribute(AUTHENTICATOR_NOTE, a);
-    }
+    public abstract void register(PluggableAuthenticator a);
 
     /**
      * Register f as principal-store factory for this Web-App.
      *
      * @param s The PrincipalStore.Factory to use for this web-app.
      */
-    public void register(PrincipalStore.Factory f) {
-        context.setAttribute(PRINCIPALSTORE_NOTE, f);
-    }
-
-    /**
-     * This will be called by the AuthModule to create the authenticator
-     * instance.
-     *
-     * @return A PluggableAuthenticator instance from the previously registered
-     *         class.
-     */
-    protected PluggableAuthenticator authenticator() {
-        try {
-            PluggableAuthenticator authenticator = (PluggableAuthenticator) context.getAttribute(
-                    AUTHENTICATOR_NOTE);
-            if (authenticator == null) {
-                String name = context.getInitParameter("roast.authenticator.class");
-//                context.
-                Class<? extends PluggableAuthenticator> c = null;
-                if (resolver != null) {
-                    try {
-                        c = (Class<? extends PluggableAuthenticator>) resolver.resolve(context).loadClass(name);
-                    } catch (ClassNotFoundException ex) {
-                    }
-                }
-                if (c == null) {
-                    try {
-                        c = (Class<? extends PluggableAuthenticator>) Thread.currentThread().getContextClassLoader().loadClass(name);
-                    } catch (ClassNotFoundException ex) {
-                        c = (Class<? extends PluggableAuthenticator>) Class.forName(name);
-                    }
-                }
-                
-                authenticator = c.newInstance();
-                register(authenticator);
-            }
-            return authenticator;
-        } catch (Throwable t) {
-            Logger log = Logger.getLogger(getClass().getName());
-            log.severe("failed to create authenticator: " + t);
-            log.log(Level.FINE, "failed to create authenticator", t);
-            return null;
-        }
-    }
+    public abstract void register(PrincipalStore.Factory f);
 
     /**
      * This will be called by the AuthModule to create the principal-store
@@ -135,27 +76,6 @@ public class Registry {
      * @return A PrincipalStore instance from the previously registered
      *         class.
      */
-    protected PrincipalStore principalStore(HttpSession session) {
-        try {
-            PrincipalStore.Factory factory = (PrincipalStore.Factory) context.getAttribute(
-                    PRINCIPALSTORE_NOTE);
-            if (factory == null) {
-                String name = context.getInitParameter("roast.principal-store.factory");
-                if (name == null) {
-                    return new DefaultPrincipalStore(session);
-                }
-                
-                Class<? extends PrincipalStore.Factory> c = (Class<? extends PrincipalStore.Factory>) Class.forName(name);
-                factory = c.newInstance();
-                register(factory);
-            }
-            return factory.factory(session);
-        } catch (Throwable t) {
-            Logger log = Logger.getLogger(getClass().getName());
-            log.severe("failed to create principal-store: " + t);
-            log.log(Level.FINE, "failed to create principal-store", t);
-            return null;
-        }
-    }
+    protected abstract PrincipalStore principalStore();
 
 }

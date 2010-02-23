@@ -23,28 +23,19 @@
  */
 package name.aikesommer.authenticator;
 
+import javax.servlet.ServletContext;
+
+
 /**
- * The PrincipalStore is used to store data for an authenticated user across
- * multiple requests. The default implementation stores the Principal in the
- * current HttpSession which is the expected behavior for most applications.
- * If however the Principal needs to be visible to a different scope, to
- * provide SSO across different web-apps for example, you can register a
- * custom instance to use.
- * This can be done with Registry.register() or the init-parameter
- * <code>roast.principal-store.factory</code>.
  *
  * @author Aike J Sommer
  */
-public interface PrincipalStore {
+public interface ModifiableRequest extends AuthenticationRequest {
 
-    void store(SimplePrincipal principal);
-    SimplePrincipal fetch();
-    void invalidate();
-
-    public static interface Factory {
-
-        PrincipalStore factory(AuthenticationRequest request);
-
-    }
+    boolean isForwarded();
+    void setForwarded(boolean b);
+    boolean isCrossContext();
+    void setCrossContext(boolean b);
+    ServletContext getOriginalContext();
 
 }

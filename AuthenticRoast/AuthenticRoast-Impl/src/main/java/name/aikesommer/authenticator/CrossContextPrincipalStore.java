@@ -23,28 +23,45 @@
  */
 package name.aikesommer.authenticator;
 
+import java.lang.ref.WeakReference;
+
+
 /**
- * The PrincipalStore is used to store data for an authenticated user across
- * multiple requests. The default implementation stores the Principal in the
- * current HttpSession which is the expected behavior for most applications.
- * If however the Principal needs to be visible to a different scope, to
- * provide SSO across different web-apps for example, you can register a
- * custom instance to use.
- * This can be done with Registry.register() or the init-parameter
- * <code>roast.principal-store.factory</code>.
  *
  * @author Aike J Sommer
  */
-public interface PrincipalStore {
+public class CrossContextPrincipalStore implements PrincipalStore {
 
-    void store(SimplePrincipal principal);
-    SimplePrincipal fetch();
-    void invalidate();
+    private static final String PRINCIPAL_NOTE = CrossContextPrincipalStore.class.getName()
+            + ".PRINCIPAL";
 
-    public static interface Factory {
+    private final WeakReference<SuperSession> session;
 
-        PrincipalStore factory(AuthenticationRequest request);
+    public CrossContextPrincipalStore(AuthenticationRequest request) {
+        session = new WeakReference<SuperSession>(SuperSession.self(request.getHttpServletRequest(),
+                request.getHttpServletResponse(), true));
+    }
 
+    public void store(SimplePrincipal principal) {
+        SuperSession s = session.get();
+        if (s != null) {
+            s.attributes().put(PRINCIPAL_NOTE, principal);
+        }
+    }
+
+    public SimplePrincipal fetch() {
+        SuperSession s = session.get();
+        if (s != null) {
+            return (SimplePrincipal) s.attributes().get(PRINCIPAL_NOTE);
+        }
+        return null;
+    }
+
+    public void invalidate() {
+        SuperSession s = session.get();
+        if (s != null) {
+            s.attributes().remove(PRINCIPAL_NOTE);
+        }
     }
 
 }

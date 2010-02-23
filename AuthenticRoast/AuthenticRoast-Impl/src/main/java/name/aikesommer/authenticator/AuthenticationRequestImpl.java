@@ -44,19 +44,26 @@ import org.apache.catalina.connector.Response;
  * 
  * @author Aike J Sommer
  */
-public class AuthenticationRequestImpl implements AuthenticationRequest {
+public abstract class AuthenticationRequestImpl implements ModifiableRequest {
 
     private HttpServletResponse response;
     private HttpServletRequest request;
     private boolean mandatory;
     private boolean forwarded = false;
+    private boolean crossContext;
+    private Map<String, Object> authenticationMap;
 
     public AuthenticationRequestImpl(HttpServletRequest request, HttpServletResponse response,
-            boolean mandatory) {
+            boolean mandatory, boolean crossContext) {
         this.request = request;
         this.response = response;
         this.mandatory = mandatory;
+        this.crossContext = crossContext;
+        this.authenticationMap = crossContext ? SuperSession.self(request, response, true).attributes()
+                : getSessionMap();
     }
+
+    protected abstract AuthenticationRequest delegate(ServletContext context);
 
     /**
      * Get the ServletContext for the current request.
@@ -121,6 +128,14 @@ public class AuthenticationRequestImpl implements AuthenticationRequest {
         this.forwarded = forwarded;
     }
 
+    public boolean isCrossContext() {
+        return crossContext;
+    }
+
+    public void setCrossContext(boolean b) {
+        crossContext = b;
+    }
+
     /**
      * Get a map containing all session attributes.
      * Changes to this map will be reflected in the session attributes.
@@ -183,6 +198,36 @@ public class AuthenticationRequestImpl implements AuthenticationRequest {
         };
     }
 
+    public Map<String, Object> getApplicationMap() {
+        final ServletContext context = getServletContext();
+        return new AttributeMap() {
+
+            @Override
+            public Enumeration<String> getAttributeNames() {
+                return context.getAttributeNames();
+            }
+
+            @Override
+            public Object getAttribute(String s) {
+                return context.getAttribute(s);
+            }
+
+            @Override
+            public void setAttribute(String s, Object o) {
+                context.setAttribute(s, o);
+            }
+
+            @Override
+            public void removeAttribute(String s) {
+                context.removeAttribute(s);
+            }
+        };
+    }
+
+    public Map<String, Object> getAuthenticationMap() {
+        return authenticationMap;
+    }
+
     /**
      * Get whether authentication is mandatory for the current request.
      * If authentication is not mandatory the authenticator can still return
@@ -203,13 +248,17 @@ public class AuthenticationRequestImpl implements AuthenticationRequest {
         this.mandatory = mandatory;
     }
 
-    public static class JSR196 extends AuthenticationRequestImpl {
+    public ServletContext getOriginalContext() {
+        return getServletContext();
+    }
+
+    public static class JSR196 extends AuthenticationRequestImpl implements JSR196Request {
 
         private Subject clientSubject;
 
         public JSR196(HttpServletRequest request, HttpServletResponse response,
-                Subject clientSubject, boolean mandatory) {
-            super(request, response, mandatory);
+                Subject clientSubject, boolean mandatory, boolean crossContext) {
+            super(request, response, mandatory, crossContext);
             this.clientSubject = clientSubject;
         }
 
@@ -221,15 +270,21 @@ public class AuthenticationRequestImpl implements AuthenticationRequest {
         public Subject getClientSubject() {
             return clientSubject;
         }
+
+        @Override
+        protected JSR196Request delegate(ServletContext context) {
+            return new WrappedRequest.JSR196(context, this);
+        }
+
     }
 
-    public static class Tomcat6 extends AuthenticationRequestImpl {
+    public static class Tomcat6 extends AuthenticationRequestImpl implements Tomcat6Request {
 
         private Request catalinaRequest;
         private Response catalinaResponse;
 
-        public Tomcat6(Request request, Response response, boolean mandatory) {
-            super(request.getRequest(), response.getResponse(), mandatory);
+        public Tomcat6(Request request, Response response, boolean mandatory, boolean crossContext) {
+            super(request.getRequest(), response.getResponse(), mandatory, crossContext);
             this.catalinaRequest = request;
             this.catalinaResponse = response;
         }
@@ -241,6 +296,12 @@ public class AuthenticationRequestImpl implements AuthenticationRequest {
         public Response getCatalinaResponse() {
             return catalinaResponse;
         }
+
+        @Override
+        protected Tomcat6Request delegate(ServletContext context) {
+            return new WrappedRequest.Tomcat6(context, this);
+        }
+
     }
 
     public abstract static class AttributeMap extends NoteMap {
