@@ -89,32 +89,9 @@ public class TomcatAuthenticator extends ValveBase implements Authenticator {
 
     };
 
-//    public void saveRequest(AuthenticationRequest request) {
-//        requestHandler.saveRequest(request);
-//    }
-//
-//    public void clearRequest(AuthenticationRequest request) {
-//        requestHandler.clearRequest(request);
-//    }
-//
-//    public void forward(AuthenticationRequest authRequest, String path) {
-//        ServletContext sc = authRequest.getServletContext();
-//        try {
-//            authRequest.getHttpServletResponse().sendRedirect(sc.getContextPath() + path);
-//            ((ModifiableRequest) authRequest).setForwarded(true);
-//        } catch (Throwable t) {
-//            log.severe("unexpected error forwarding or redirecting to " + path +
-//                    ": " + t);
-//            log.log(Level.FINE,
-//                    "unexpected error forwarding or redirecting to " + path, t);
-//        }
-//    }
     protected void register(AuthenticationRequest request,
             SimplePrincipal simplePrincipal) {
         try {
-//            RegistryImpl.forContext(request.getServletContext()).principalStore(request.
-//                    getHttpServletRequest().getSession()).store(simplePrincipal);
-
             Tomcat6Request req =
                     (Tomcat6Request) request;
             req.getCatalinaRequest().setAuthType("ROAST");
@@ -128,23 +105,6 @@ public class TomcatAuthenticator extends ValveBase implements Authenticator {
         }
     }
 
-//    public void restoreRequest(AuthenticationRequest request) {
-//        requestHandler.restoreRequest(request);
-//    }
-//
-//    public void redirectToRequest(AuthenticationRequest request) {
-//        String path = requestHandler.getPathForRequest(request);
-//
-//        if (path != null) {
-//            forward(request, path);
-//        } else {
-//            throw new IllegalStateException();
-//        }
-//    }
-//
-//    public boolean matchesRequest(AuthenticationRequest request) {
-//        return requestHandler.matchesRequest(request);
-//    }
     @Override
     public void setContainer(Container container) {
         this.context = (Context) container;
@@ -256,12 +216,6 @@ public class TomcatAuthenticator extends ValveBase implements Authenticator {
                 }
             }
 
-//            if (constraints == null && authenticator == null) {
-//                authenticator.finish(manager, authReq);
-//                finished = true;
-//                getNext().invoke(request, response);
-//                return;
-//            } else if (authenticator != null) {
             switch (authenticator.tryAuthenticate(manager, authReq)) {
                 case Continue:
                     return;
@@ -281,10 +235,6 @@ public class TomcatAuthenticator extends ValveBase implements Authenticator {
                         }
                     }
             }
-//            } else {
-//                response.setStatus(Response.SC_UNAUTHORIZED);
-//                return;
-//            }
 
             simplePrincipal = registry.principalStore().fetch();
             if (!checkRoles(request, response, constraints, simplePrincipal)) {
@@ -303,7 +253,4 @@ public class TomcatAuthenticator extends ValveBase implements Authenticator {
         getNext().invoke(request, response);
     }
 
-//    public void addQueryString(AuthenticationRequest request, String queryString) {
-//        requestHandler.addQueryString(request, queryString);
-//    }
 }

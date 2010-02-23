@@ -192,7 +192,6 @@ public class AuthModule extends AuthenticationManagerBase implements ServerAuthM
     public void register(AuthenticationRequest request, SimplePrincipal simplePrincipal) {
         try {
             createPrincipal(simplePrincipal, ((JSR196Request) request).getClientSubject());
-//            RegistryImpl.forContext(request.getServletContext()).principalStore(request.getHttpServletRequest().getSession()).store(simplePrincipal);
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
