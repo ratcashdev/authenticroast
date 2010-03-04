@@ -1,21 +1,81 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>name.aikesommer</groupId>
-    <artifactId>Glassfish2TestApp</artifactId>
+    <artifactId>RoastTestApp</artifactId>
     <packaging>war</packaging>
     <version>0.1.0-SNAPSHOT</version>
-    <name>Glassfish2TestApp</name>
+    <name>RoastTestApp</name>
     <url>http://code.google.com/p/authenticroast/</url>
-    <dependencies>
 
+    <profiles>
+        <profile>
+            <id>tomcat6</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+
+            <build>
+                <finalName>RoastTestApp-Tomcat6</finalName>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-war-plugin</artifactId>
+                        <configuration>
+                            <webResources>
+                                <resource>
+                                    <directory>src/main/webapp-tomcat6</directory>
+                                </resource>
+                            </webResources>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>glassfish2</id>
+            <activation>
+                <property>
+                    <name>glassfish2</name>
+                </property>
+            </activation>
+
+            <dependencies>
+            </dependencies>
+            <build>
+                <finalName>RoastTestApp-Glassfish2</finalName>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-war-plugin</artifactId>
+                        <configuration>
+                            <warSourceExcludes>META-INF/context.xml</warSourceExcludes>
+                            <webResources>
+                                <resource>
+                                    <directory>src/main/webapp-glassfish2</directory>
+                                </resource>
+                                <resource>
+                                    <directory>src/main/webapp</directory>
+                                    <excludes>
+                                        <exclude>META-INF/context.xml</exclude>
+                                    </excludes>
+                                </resource>
+                            </webResources>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+    <dependencies>
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
             <version>2.5</version>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>javax.servlet.jsp</groupId>
             <artifactId>jsp-api</artifactId>
@@ -34,6 +94,7 @@
             <version>0.3.2-SNAPSHOT</version>
         </dependency>
     </dependencies>
+
     <build>
         <plugins>
             <plugin>
@@ -45,7 +106,10 @@
                 </configuration>
             </plugin>
         </plugins>
-        <finalName>Glassfish2TestApp</finalName>
     </build>
+    <properties>
+        <netbeans.hint.deploy.server>Tomcat60</netbeans.hint.deploy.server>
+    </properties>
 </project>
+
 
