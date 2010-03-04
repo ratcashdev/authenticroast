@@ -2,11 +2,11 @@
     <parent>
         <groupId>name.aikesommer</groupId>
         <artifactId>AuthenticRoast</artifactId>
-        <version>0.3.2</version>
+        <version>0.3.3-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>AuthenticRoast-Impl</artifactId>
-    <version>0.3.2</version>
+    <version>0.3.3-SNAPSHOT</version>
     <name>AuthenticRoast-Impl</name>
     <url>http://code.google.com/p/authenticroast/</url>
     <dependencies>
@@ -31,7 +31,7 @@
         <dependency>
             <groupId>name.aikesommer</groupId>
             <artifactId>AuthenticRoast-API</artifactId>
-            <version>0.3.2</version>
+            <version>0.3.3-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency> 
     </dependencies>

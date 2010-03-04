@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>name.aikesommer</groupId>
     <artifactId>AuthenticRoast</artifactId>
-    <version>0.3.2</version>
+    <version>0.3.3-SNAPSHOT</version>
     <name>AuthenticRoast</name>
     <packaging>pom</packaging>
     <url>http://code.google.com/p/authenticroast/</url>
@@ -88,7 +88,7 @@
         </snapshotRepository>
     </distributionManagement>
     <scm>
-        <connection>scm:svn:http://authenticroast.googlecode.com/svn/tags/AuthenticRoast-0.3.2</connection>
-        <developerConnection>scm:svn:https://authenticroast.googlecode.com/svn/tags/AuthenticRoast-0.3.2</developerConnection>
+        <connection>scm:svn:http://authenticroast.googlecode.com/svn/</connection>
+        <developerConnection>scm:svn:https://authenticroast.googlecode.com/svn/</developerConnection>
     </scm>
 </project>
