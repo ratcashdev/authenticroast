@@ -25,13 +25,13 @@
         <dependency>
             <groupId>name.aikesommer</groupId>
             <artifactId>AuthenticRoast-API</artifactId>
-            <version>0.3.1-SNAPSHOT</version>
+            <version>0.3.2-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>name.aikesommer</groupId>
             <artifactId>AuthenticRoast-Extras</artifactId>
-            <version>0.3.1-SNAPSHOT</version>
+            <version>0.3.2-SNAPSHOT</version>
         </dependency>
     </dependencies>
     <build>
