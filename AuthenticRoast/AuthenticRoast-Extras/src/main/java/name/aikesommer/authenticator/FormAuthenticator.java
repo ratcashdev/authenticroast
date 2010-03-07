@@ -72,6 +72,14 @@ public abstract class FormAuthenticator extends PluggableAuthenticator {
         return "/login-error.jsp";
     }
 
+    /**
+     * Overwrite this to specify a different path to direct to, if there is no
+     * original request.
+     */
+    protected String getNextPath() {
+        return "/";
+    }
+
     @Override
     public Status tryAuthenticate(AuthenticationManager manager, AuthenticationRequest request) {
         if (manager.matchesRequest(request) && request.getSessionMap().containsKey(PRINCIPAL_NOTE)) {
@@ -95,7 +103,11 @@ public abstract class FormAuthenticator extends PluggableAuthenticator {
                     if (queryString != null && queryString.length() > 0) {
                         manager.addQueryString(request, queryString);
                     }
-                    manager.redirectToRequest(request);
+                    if (manager.hasRequest(request)) {
+                        manager.redirectToRequest(request);
+                    } else {
+                        manager.forward(request, getNextPath());
+                    }
                     return Status.Continue;
                 }
             }

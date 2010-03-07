@@ -38,6 +38,10 @@ public class AuthenticationManagerBase implements PluggableAuthenticator.Authent
 
     private RequestHandler requestHandler = new RequestHandler();
 
+    public boolean hasRequest(AuthenticationRequest request) {
+        return requestHandler.getPathForRequest(request) != null;
+    }
+
     public void saveRequest(AuthenticationRequest request) {
         requestHandler.saveRequest((ModifiableRequest) request);
     }

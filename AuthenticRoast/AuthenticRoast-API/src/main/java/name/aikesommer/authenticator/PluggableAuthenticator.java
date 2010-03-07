@@ -124,14 +124,22 @@ public abstract class PluggableAuthenticator {
     public static interface AuthenticationManager {
         
         /**
-         * Save the current request, so that it can be restored after 
+         * Returns wether a request has been saved before.
+         *
+         * @param request The AuthenticationRequest encapsulating all data
+         *                needed to perform authentication.
+         */
+        public boolean hasRequest(AuthenticationRequest request);
+
+        /**
+         * Save the current request, so that it can be restored after
          * successful authentication.
-         * 
+         *
          * @param request The AuthenticationRequest encapsulating all data
          *                needed to perform authentication.
          */
         public void saveRequest(AuthenticationRequest request);
-        
+
         /**
          * Redirect to a previously stored request with saveRequest.
          * 
