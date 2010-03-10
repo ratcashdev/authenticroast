@@ -36,6 +36,7 @@
                     <excludes>
                         <exclude>*gpl-*.txt</exclude>
                         <exclude>*.xml</exclude>
+                        <exclude>**/thirdparty/**</exclude>
                     </excludes>
                     <useDefaultExcludes>true</useDefaultExcludes>
                 </configuration>
