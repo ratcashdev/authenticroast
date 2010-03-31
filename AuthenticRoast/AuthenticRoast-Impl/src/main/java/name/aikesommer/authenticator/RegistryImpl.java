@@ -215,8 +215,9 @@ public class RegistryImpl extends Registry {
             if (factory == null) {
                 String name = context.getInitParameter("roast.principal-store.factory");
                 if (name == null) {
-                    store = isCrossContext() ? new CrossContextPrincipalStore(request) : new DefaultPrincipalStore(
-                            request.getHttpServletRequest().getSession());
+                    store = isCrossContext() ? 
+                        new CrossContextPrincipalStore(request.getHttpServletRequest(), request.getHttpServletResponse()) :
+                        new DefaultPrincipalStore(request.getHttpServletRequest().getSession());
                 } else {
                     Class<? extends PrincipalStore.Factory> c = (Class<? extends PrincipalStore.Factory>) Class.forName(
                             name);

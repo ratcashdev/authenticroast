@@ -24,6 +24,8 @@
 package name.aikesommer.authenticator;
 
 import java.lang.ref.WeakReference;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 
 /**
@@ -37,9 +39,9 @@ public class CrossContextPrincipalStore implements PrincipalStore {
 
     private final WeakReference<SuperSession> session;
 
-    public CrossContextPrincipalStore(AuthenticationRequest request) {
-        session = new WeakReference<SuperSession>(SuperSession.self(request.getHttpServletRequest(),
-                request.getHttpServletResponse(), true));
+    public CrossContextPrincipalStore(HttpServletRequest request, HttpServletResponse response) {
+        session = new WeakReference<SuperSession>(SuperSession.self(request,
+                response, true));
     }
 
     public void store(SimplePrincipal principal) {

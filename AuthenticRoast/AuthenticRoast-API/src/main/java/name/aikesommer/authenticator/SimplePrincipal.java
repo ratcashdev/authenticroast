@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 /**
@@ -56,12 +57,22 @@ public class SimplePrincipal implements Principal {
      * Use this to access the current authenticated principal, if you need
      * access to any of the information in your sub-class.
      *
-     * @param session The current session as in HttpServletRequest.getSession()
+     * @param request The current HttpServletRequest
      * @return The previously authenticated SimplePrincipal instance for this
      *         session.
      */
     public static SimplePrincipal getPrincipal(HttpServletRequest request) {
         return Registry.forContext(request.getSession().getServletContext()).principalStore().fetch();
+    }
+
+    /**
+     * Use this to store an authenticated principal from within your application.
+     *
+     * @param request The current HttpServletRequest
+     * @param principal The authenticated SimplePrincipal
+     */
+    public static void setPrincipal(HttpServletRequest request, SimplePrincipal principal) {
+        Registry.forContext(request.getSession().getServletContext()).principalStore().store(principal);
     }
 
     
