@@ -57,12 +57,22 @@ public class AuthenticationManagerBase implements PluggableAuthenticator.Authent
 
     public void forward(AuthenticationRequest authRequest, String context, String path) {
         try {
-            authRequest.getHttpServletResponse().sendRedirect(
-                    context + path);
+            String to;
+            if (path.startsWith("http://") || path.startsWith("https://")) {
+                to = path;
+            } else {
+                to = context + path;
+            }
+            authRequest.getHttpServletResponse().sendRedirect(to);
             ((ModifiableRequest) authRequest).setForwarded(true);
         } catch (Throwable t) {
             log.severe("unexpected error forwarding or redirecting to " + path + ": " + t);
             log.log(Level.FINE, "unexpected error forwarding or redirecting to " + path, t);
+            if (t instanceof RuntimeException) {
+                throw (RuntimeException) t;
+            } else {
+                throw new RuntimeException(t);
+            }
         }
     }
 

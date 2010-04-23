@@ -190,13 +190,13 @@ public abstract class PluggableAuthenticator {
 
         /**
          * Forward to the path, eg to forward to a login-page.
-         * 
+         *
          * @param request The AuthenticationRequest encapsulating all data
          *                needed to perform authentication.
          * @param path The path to forward to.
          */
         public void forward(AuthenticationRequest request, String path);
-        
+
         /**
          * Register a SimplePrincipal instance after successful authentication.
          * 
