@@ -36,32 +36,67 @@ import name.aikesommer.authenticator.AuthenticationRequest.Status;
  * 
  * @author Aike J Sommer
  */
-public abstract class DelegatingAuthenticator extends PluggableAuthenticator {
+public abstract class CompositeAuthenticator extends PluggableAuthenticator {
 
-    private Collection<PluggableAuthenticator> authenticators;
+    private volatile Collection<PluggableAuthenticator> authenticators = null;
 
-    public DelegatingAuthenticator() {
-        authenticators = createAuthenticators();
+    public CompositeAuthenticator() {
     }
 
+    /**
+     * Overwrite this to create the authenticators when they are first needed.
+     * This will only be called once per instance.
+     */
     protected abstract Collection<PluggableAuthenticator> createAuthenticators();
 
-    protected Collection<PluggableAuthenticator> getAuthenticators(
-            AuthenticationManager manager, AuthenticationRequest request,
-            Collection<PluggableAuthenticator> authenticators) {
+    /**
+     * Returns the currently stored authenticators in this instance.
+     *
+     * @return The currently stored authenticators in this instance or null if
+     *         they have not been created yet.
+     */
+    protected final Collection<PluggableAuthenticator> getAuthenticators() {
         return authenticators;
     }
 
+    /**
+     * Set the authenticators to be used by this instance.
+     *
+     * @param authenticators the authenticators to be used by this instance or
+     *                       null to have <code>createAuthenticators()</code>
+     *                       called next time they are needed.
+     */
+    protected final void setAuthenticators(Collection<PluggableAuthenticator> authenticators) {
+        this.authenticators = authenticators;
+    }
+
+    /**
+     * Get the list of authenticators to be used for this instance. The default
+     * implementation will call <code>checkAuthenticators()</code> if
+     * <code>authenticators</code> is <code>null</code> and then just return
+     * the contents of <code>authenticators</code>.
+     *
+     * @param manager The {@link AuthenticationManager} used for this request.
+     * @param request The {@link AuthenticationRequest} representing this request.
+     * @return The list of authenticators.
+     */
     protected Collection<PluggableAuthenticator> getAuthenticators(
             AuthenticationManager manager, AuthenticationRequest request) {
-        return getAuthenticators(manager, request, authenticators);
+        if (authenticators == null) {
+            synchronized (this) {
+                if (authenticators == null) {
+                    authenticators = createAuthenticators();
+                }
+            }
+        }
+        return authenticators;
     }
 
     @Override
     public Status tryAuthenticate(AuthenticationManager manager,
             AuthenticationRequest request) {
         for (PluggableAuthenticator authenticator : getAuthenticators(manager,
-                request, authenticators)) {
+                request)) {
             Status status = authenticator.tryAuthenticate(manager, request);
             if (status != null && status != Status.None) {
                 return status;
@@ -75,7 +110,7 @@ public abstract class DelegatingAuthenticator extends PluggableAuthenticator {
     public Status authenticate(AuthenticationManager manager,
             AuthenticationRequest request) {
         for (PluggableAuthenticator authenticator : getAuthenticators(manager,
-                request, authenticators)) {
+                request)) {
             Status status = authenticator.authenticate(manager, request);
             if (status != null && status != Status.None) {
                 return status;
@@ -89,7 +124,7 @@ public abstract class DelegatingAuthenticator extends PluggableAuthenticator {
     public ManageAction manage(AuthenticationManager manager,
             AuthenticationRequest request) {
         for (PluggableAuthenticator authenticator : getAuthenticators(manager,
-                request, authenticators)) {
+                request)) {
             ManageAction action = authenticator.manage(manager, request);
             if (action != null && action != ManageAction.None) {
                 return action;

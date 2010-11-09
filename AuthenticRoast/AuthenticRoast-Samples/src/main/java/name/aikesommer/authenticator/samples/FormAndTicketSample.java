@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import name.aikesommer.authenticator.AuthenticationRequest;
-import name.aikesommer.authenticator.DelegatingAuthenticator;
+import name.aikesommer.authenticator.CompositeAuthenticator;
 import name.aikesommer.authenticator.FormAuthenticator;
 import name.aikesommer.authenticator.LogoutManager;
 import name.aikesommer.authenticator.PluggableAuthenticator;
@@ -31,7 +31,7 @@ import name.aikesommer.authenticator.TicketAuthenticator;
  * 
  * @author Aike J Sommer
  */
-public class FormAndTicketSample extends DelegatingAuthenticator {
+public class FormAndTicketSample extends CompositeAuthenticator {
 
     @Override
     protected Collection<PluggableAuthenticator> createAuthenticators() {
