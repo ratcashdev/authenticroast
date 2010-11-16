@@ -74,7 +74,8 @@ public class LogoutManager extends PluggableAuthenticator {
     }
 
     /**
-     * Overwrite this to perform anything necessary with your session-data.
+     * Overwrite this to perform anything necessary with your session-data. This
+     * is called before the session is destroyed.
      */
     protected void onLogout(AuthenticationManager manager, AuthenticationRequest request) {
     }
@@ -95,6 +96,7 @@ public class LogoutManager extends PluggableAuthenticator {
         boolean logoutAction = path.endsWith(LOGOUT_ACTION);
 
         if (logoutAction) {
+            onLogout(manager, request);
             manager.forward(request, getNextPath(manager, request));
             return ManageAction.Clear;
         }
