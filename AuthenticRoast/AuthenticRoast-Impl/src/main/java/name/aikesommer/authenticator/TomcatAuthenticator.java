@@ -26,6 +26,7 @@ package name.aikesommer.authenticator;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.security.Principal;
+import java.util.LinkedList;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import org.apache.catalina.Authenticator;
@@ -94,11 +95,15 @@ public class TomcatAuthenticator extends ValveBase implements Authenticator {
         try {
             Tomcat6Request req =
                     (Tomcat6Request) request;
+            GenericPrincipal gp = new GenericPrincipal(context.getRealm(),
+                    simplePrincipal.getName(), null,
+                    new LinkedList<String>(simplePrincipal.getGroups()),
+                    simplePrincipal);
             req.getCatalinaRequest().setAuthType("ROAST");
-            req.getCatalinaRequest().setUserPrincipal(simplePrincipal);
+            req.getCatalinaRequest().setUserPrincipal(gp);
             Session session = req.getCatalinaRequest().getSessionInternal(true);
             session.setAuthType("ROAST");
-            session.setPrincipal(simplePrincipal);
+            session.setPrincipal(gp);
             session.setNote(Constants.SESS_USERNAME_NOTE, simplePrincipal.getName());
         } catch (Exception ex) {
             throw new RuntimeException(ex);
