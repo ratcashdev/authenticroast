@@ -59,6 +59,13 @@ public abstract class BasicAuthenticator extends PluggableAuthenticator {
     protected abstract SimplePrincipal loadPrincipal(AuthenticationManager manager,
             AuthenticationRequest request, String username);
 
+    /**
+     * Return the realm-name used for basic authentication.
+     *
+     * @return The realm name shown at the browser popup dialog.
+     */
+    protected abstract String getRealmName();
+
     private String checkAuthentication(AuthenticationManager manager, AuthenticationRequest request) {
         String authHeader = request.getHttpServletRequest().getHeader("Authorization");
         if (authHeader != null) {
@@ -99,7 +106,7 @@ public abstract class BasicAuthenticator extends PluggableAuthenticator {
     @Override
     public Status authenticate(AuthenticationManager manager, AuthenticationRequest request) {
         request.getHttpServletResponse().setHeader("WWW-Authenticate",
-                "Basic realm=\"MediaAssetFinder DAV\"");
+                "Basic realm=\"" + getRealmName() + "\"");
         try {
             request.getHttpServletResponse().sendError(HttpServletResponse.SC_UNAUTHORIZED);
         } catch (IOException ex) {
