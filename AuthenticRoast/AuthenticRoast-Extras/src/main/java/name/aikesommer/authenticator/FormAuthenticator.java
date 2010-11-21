@@ -106,6 +106,7 @@ public abstract class FormAuthenticator extends PluggableAuthenticator {
                     if (manager.hasRequest(request)) {
                         manager.redirectToRequest(request);
                     } else {
+                        manager.saveRequest(request, getNextPath());
                         manager.forward(request, getNextPath());
                     }
                     return Status.Continue;

@@ -141,6 +141,16 @@ public abstract class PluggableAuthenticator {
         public void saveRequest(AuthenticationRequest request);
 
         /**
+         * Save the path as original request, so that it can be restored after
+         * successful authentication.
+         *
+         * @param request The AuthenticationRequest encapsulating all data
+         *                needed to perform authentication.
+         * @param path The path to be used as original request.
+         */
+        public void saveRequest(AuthenticationRequest request, String path);
+
+        /**
          * Redirect to a previously stored request with saveRequest.
          * 
          * @param request The AuthenticationRequest encapsulating all data

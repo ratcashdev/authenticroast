@@ -51,6 +51,12 @@ public class RequestHandler {
         session(request).put(REQUEST_QUERY_NOTE, request.getHttpServletRequest().getQueryString());
     }
 
+    public void saveRequest(ModifiableRequest request, String path) {
+        session(request).put(REQUEST_CONTEXT_NOTE, request.getOriginalContext().getContextPath());
+        session(request).put(REQUEST_PATH_NOTE, path);
+        session(request).put(REQUEST_QUERY_NOTE, "");
+    }
+
     public void clearRequest(AuthenticationRequest request) {
         session(request).remove(REQUEST_CONTEXT_NOTE);
         session(request).remove(REQUEST_PATH_NOTE);

@@ -34,7 +34,7 @@ import javax.servlet.ServletContext;
  */
 public class AuthenticationManagerBase implements PluggableAuthenticator.AuthenticationManager {
 
-    protected Logger log = Logger.getLogger(getClass().getName());
+    protected static final Logger log = Logger.getLogger(AuthenticationManagerBase.class.getName());
 
     private RequestHandler requestHandler = new RequestHandler();
 
@@ -43,6 +43,10 @@ public class AuthenticationManagerBase implements PluggableAuthenticator.Authent
     }
 
     public void saveRequest(AuthenticationRequest request) {
+        requestHandler.saveRequest((ModifiableRequest) request);
+    }
+
+    public void saveRequest(AuthenticationRequest request, String path) {
         requestHandler.saveRequest((ModifiableRequest) request);
     }
 
