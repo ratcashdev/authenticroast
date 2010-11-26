@@ -47,7 +47,7 @@ public class AuthenticationManagerBase implements PluggableAuthenticator.Authent
     }
 
     public void saveRequest(AuthenticationRequest request, String path) {
-        requestHandler.saveRequest((ModifiableRequest) request);
+        requestHandler.saveRequest((ModifiableRequest) request, path);
     }
 
     public void clearRequest(AuthenticationRequest request) {
