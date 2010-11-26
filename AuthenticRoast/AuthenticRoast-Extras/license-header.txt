@@ -1,5 +1,3 @@
-   Copyright (C) 2007-2010 Aike J Sommer (http://aikesommer.name/)
-
    This file is part of AuthenticRoast.
 
    This library is free software; you can redistribute it and/or
