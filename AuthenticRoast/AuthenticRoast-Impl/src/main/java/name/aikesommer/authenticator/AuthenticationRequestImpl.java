@@ -108,8 +108,11 @@ public abstract class AuthenticationRequestImpl implements ModifiableRequest {
      *          the context-path and excluding any parameters.
      */
     public String getRequestPath() {
-        return request.getServletPath() +
-                (request.getPathInfo() != null ? request.getPathInfo() : "");
+        String requested = request.getRequestURI();
+        if (! requested.startsWith(getContextPath())) {
+            throw new IllegalArgumentException(requested);
+        }
+        return requested.substring(getContextPath().length());
     }
 
     /**
