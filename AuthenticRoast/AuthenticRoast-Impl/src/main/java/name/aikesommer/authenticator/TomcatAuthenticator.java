@@ -116,6 +116,23 @@ public class TomcatAuthenticator extends ValveBase implements Authenticator {
         super.setContainer(container);
     }
 
+    private boolean hasAuthConstraint(SecurityConstraint[] constraints) {
+        if (constraints == null) {
+            return false;
+        }
+
+        for (int i = 0; i < constraints.length; i++) {
+            SecurityConstraint constraint = constraints[i];
+            if (! constraint.getAuthConstraint()) {
+                continue;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
     private boolean checkRoles(Request request, Response response,
             SecurityConstraint[] constraints, Principal principal) {
         if (constraints == null) {
@@ -124,21 +141,29 @@ public class TomcatAuthenticator extends ValveBase implements Authenticator {
 
         for (int i = 0; i < constraints.length; i++) {
             SecurityConstraint constraint = constraints[i];
+            if (! constraint.getAuthConstraint()) {
+                continue;
+            }
+
             String[] roles = constraint.getAllRoles() ? context.findSecurityRoles()
                     : constraint.findAuthRoles();
             if (roles == null) {
                 roles = new String[0];
             }
 
+            boolean match = false;
             for (int j = 0; j < roles.length; j++) {
                 String role = roles[j];
                 if (checkRole(principal, role)) {
-                    return true;
+                    match = true;
+                    break;
                 }
             }
-
-            response.setStatus(Response.SC_FORBIDDEN);
-            return false;
+            
+            if (! match) {
+                response.setStatus(Response.SC_FORBIDDEN);
+                return false;
+            }
         }
 
         return true;
@@ -171,20 +196,21 @@ public class TomcatAuthenticator extends ValveBase implements Authenticator {
 
         RegistryImpl registry = RegistryImpl.forContext(request.getContext().
                 getServletContext());
-        Tomcat6Request authReq =
-                new AuthenticationRequestImpl.Tomcat6(request, response,
-                constraints != null, registry.isCrossContext());
-        registry.createPrincipalStore(authReq);
-
-        PluggableAuthenticator authenticator = registry.authenticator();
-
         if (!realm.hasUserDataPermission(request, response,
                 constraints)) {
             return;
         }
 
+        boolean hasAuthConstraint = hasAuthConstraint(constraints);
+        Tomcat6Request authReq =
+                new AuthenticationRequestImpl.Tomcat6(request, response,
+                hasAuthConstraint, registry.isCrossContext());
+        registry.createPrincipalStore(authReq);
+
+        PluggableAuthenticator authenticator = registry.authenticator();
+
         if (authenticator == null) {
-            if (constraints == null) {
+            if (! hasAuthConstraint) {
                 getNext().invoke(request, response);
                 return;
             } else {
@@ -228,7 +254,7 @@ public class TomcatAuthenticator extends ValveBase implements Authenticator {
                     response.setStatus(Response.SC_FORBIDDEN);
                     return;
                 case None:
-                    if (constraints != null) {
+                    if (hasAuthConstraint) {
                         switch (authenticator.authenticate(manager, authReq)) {
                             case Continue:
                                 return;

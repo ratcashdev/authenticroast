@@ -8,15 +8,10 @@
         <title>Test page</title>
     </head>
     <body>
-        <h1>Alright, <%= request.getUserPrincipal().getName() %>!</h1>
+        <h1>Alright, <%= (request.getUserPrincipal() == null ? "stranger" : request.getUserPrincipal().getName()) %>!</h1>
 
         <p>
-            Logging in seems to work! :-)
-        </p>
-
-        <p>
-            User: <%= request.isUserInRole("user") %><br>
-            Admin: <%= request.isUserInRole("admin") %>
+            Constraints without authentication seem to work! :-)
         </p>
     </body>
 </html>
