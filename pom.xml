@@ -80,12 +80,12 @@
         <repository>
             <id>authenticroast-releases</id>
             <name>AuthenticRoast Repository - Releases</name>
-            <url>svn:https://authenticroast.googlecode.com/svn/maven2/releases/</url>
+            <url>file:../../maven2/releases/</url>
         </repository>
         <snapshotRepository>
             <id>authenticroast-snapshots</id>
             <name>AuthenticRoast Repository - Snapshots</name>
-            <url>svn:https://authenticroast.googlecode.com/svn/maven2/snapshots/</url>
+            <url>file:../../maven2/snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
     <scm>
