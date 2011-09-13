@@ -23,12 +23,12 @@
  */
 package name.aikesommer.authenticator;
 
+import java.io.Serializable;
 import java.security.Principal;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 /**
@@ -38,7 +38,8 @@ import javax.servlet.http.HttpSession;
  * 
  * @author Aike J Sommer
  */
-public class SimplePrincipal implements Principal {
+public class SimplePrincipal implements Principal, Serializable {
+	public static final long	serialVersionUID = 1L;
 
     /**
      * Use this to access the current authenticated principal, if you need
