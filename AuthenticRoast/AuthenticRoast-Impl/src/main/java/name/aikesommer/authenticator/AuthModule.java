@@ -62,6 +62,7 @@ public class AuthModule extends AuthenticationManagerBase implements ServerAuthM
 
     private boolean success;
 
+	@Override
     public void initialize(MessagePolicy requestPolicy, MessagePolicy responsePolicy,
             CallbackHandler handler, Map options) throws AuthException {
         this.requestPolicy = requestPolicy;
@@ -71,10 +72,12 @@ public class AuthModule extends AuthenticationManagerBase implements ServerAuthM
         this.success = false;
     }
 
+	@Override
     public Class[] getSupportedMessageTypes() {
         return null;
     }
 
+	@Override
     public AuthStatus validateRequest(MessageInfo info, Subject clientSubject,
             Subject serviceSubject) throws AuthException {
         HttpServletRequest request = (HttpServletRequest) info.getRequestMessage();
@@ -96,7 +99,7 @@ public class AuthModule extends AuthenticationManagerBase implements ServerAuthM
             authenticator.begin(this, authReq);
 
             /**
-             * Check wether we already authenticated the user. In that case we
+             * Check whether we already authenticated the user. In that case we
              * saved our Principal in the session and can just load it from 
              * there.
              * We will call manage() in our authenticator to be able to logout
@@ -117,7 +120,7 @@ public class AuthModule extends AuthenticationManagerBase implements ServerAuthM
             }
 
             /**
-             * The user hasnt been authenticated before, so we'll try to do
+             * The user hasn't been authenticated before, so we'll try to do
              * that now. The actual process of authentication will be done 
              * by the authenticator class in our web-app.
              */
@@ -162,10 +165,12 @@ public class AuthModule extends AuthenticationManagerBase implements ServerAuthM
         }
     }
 
+	@Override
     public AuthStatus secureResponse(MessageInfo info, Subject serviceSubject) throws AuthException {
         return success ? AuthStatus.SEND_SUCCESS : AuthStatus.SEND_CONTINUE;
     }
 
+	@Override
     public void cleanSubject(MessageInfo info, Subject subject) throws AuthException {
     }
 

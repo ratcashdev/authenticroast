@@ -48,6 +48,8 @@ public class RegistryImpl extends Registry {
     private static final String PRINCIPALSTORE_NOTE = RegistryImpl.class.getName()
             + ".PRINCIPALSTORE";
 
+	private static final String BEAN_MANAGER_NOTE = "javax.enterprise.inject.spi.BeanManager";
+	
     private static ClassLoaderResolver resolver = null;
 
     /**
@@ -55,6 +57,7 @@ public class RegistryImpl extends Registry {
      * authenticator.
      *
      * @param context The ServletContext instance for the current web-app.
+	 * @return 
      */
     public static RegistryImpl forContext(ServletContext context) {
         return new RegistryImpl(context);
@@ -81,6 +84,7 @@ public class RegistryImpl extends Registry {
      *
      * @param a The PluggableAuthenticator to use for this web-app.
      */
+	@Override
     public void register(PluggableAuthenticator a) {
         context.setAttribute(AUTHENTICATOR_NOTE, a);
     }
@@ -90,6 +94,7 @@ public class RegistryImpl extends Registry {
      *
      * @param s The PrincipalStore.Factory to use for this web-app.
      */
+	@Override
     public void register(PrincipalStore.Factory f) {
         context.setAttribute(PRINCIPALSTORE_FACTORY_NOTE, f);
     }
@@ -157,11 +162,11 @@ public class RegistryImpl extends Registry {
             log.severe("failed to create authenticator: " + t);
             log.log(Level.FINE, "failed to create authenticator", t);
             return null;
-        }
+		}
     }
 
     /**
-     * Get wether cross-context authentication should be enabled.
+     * Get whether cross-context authentication should be enabled.
      */
     protected boolean isCrossContext() {
         Boolean result = (Boolean) context.getAttribute(CROSS_CONTEXT_NOTE);
@@ -176,7 +181,7 @@ public class RegistryImpl extends Registry {
     }
 
     /**
-     * Get wether this context allows to be used as a delegate.
+     * Get whether this context allows to be used as a delegate.
      */
     private boolean isDelegate() {
         return "true".equals(context.getInitParameter("roast.is-delegate"));
