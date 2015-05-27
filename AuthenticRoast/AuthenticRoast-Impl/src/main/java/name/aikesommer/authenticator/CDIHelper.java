@@ -1,5 +1,5 @@
 /**
- *    Copyright (C) 2015 OmniSecurity
+ *    Copyright (C) 2015 Ratcash
  *
  *    This file is part of AuthenticRoast.
  *
@@ -24,8 +24,13 @@
 package name.aikesommer.authenticator;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
-import javax.enterprise.context.ApplicationScoped;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.util.Set;
+import javax.enterprise.context.Dependent;
+import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
@@ -40,22 +45,23 @@ public class CDIHelper {
 		return getReference(beanClass, getBeanManager());
 	}
 
-	public static <T> T getReferenceOrNull(Class<T> beanClass) {
-		return getReferenceOrNull(beanClass, getBeanManager());
+	public static <T> T getReferenceOrNull(Class<T> beanClass,  Annotation... qualifier) {
+		return getReferenceOrNull(beanClass, getBeanManager(), qualifier);
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <T> T getReference(Class<T> beanClass, BeanManager beanManager) {
+	public static <T> T getReference(Class<T> beanClass, BeanManager beanManager, Annotation... qualifier) {
 
-		Bean<T> bean = (Bean<T>) beanManager.resolve(beanManager.getBeans(beanClass));
+		Bean<T> bean = (Bean<T>) beanManager.resolve(beanManager.getBeans(beanClass, qualifier));
 		return (T) beanManager.getReference(bean, beanClass, beanManager.createCreationalContext(bean));
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <T> T getReferenceOrNull(Class<T> beanClass, BeanManager beanManager) {
+	public static <T> T getReferenceOrNull(Class<T> beanClass, BeanManager beanManager, Annotation... qualifier) {
 		try {
-			Bean<T> bean = (Bean<T>) beanManager.resolve(beanManager.getBeans(beanClass));
-			return (T) beanManager.getReference(bean, beanClass, beanManager.createCreationalContext(bean));
+			return getBeanClassInstance(beanManager, beanClass, qualifier);
+//			Bean<T> bean = (Bean<T>) beanManager.resolve(beanManager.getBeans(beanClass, qualifier));
+//			return (T) beanManager.getReference(bean, beanClass, beanManager.createCreationalContext(bean));
 		} catch (Exception e) {
 			return null;
 		}
@@ -113,9 +119,63 @@ public class CDIHelper {
 		}
 	}
 	
+	/**
+	 * Returns a proxied bean class instance that cleans up itself
+	 * @param <B>
+	 * @param beanManager
+	 * @param beanType
+	 * @param qualifiers
+	 * @return 
+	 */
+	public static <B> B getBeanClassInstance(BeanManager beanManager, Class<B> beanType, Annotation... qualifiers) {
+		final B result;
+		Set<Bean<?>> beans = beanManager.getBeans(beanType, qualifiers);
+		if (beans.isEmpty()) {
+			result = null;
+		} else {
+			final Bean<B> bean = (Bean<B>) beanManager.resolve(beans);
+			if (bean == null) {
+				result = null;
+			} else {
+				final CreationalContext<B> cc = beanManager.createCreationalContext(bean);
+				final B reference = (B) beanManager.getReference(bean, beanType, cc);
+				Class<? extends Annotation> scope = bean.getScope();
+				if (scope.equals(Dependent.class)) {
+					if (beanType.isInterface()) {
+						result = (B) Proxy.newProxyInstance(bean.getBeanClass().getClassLoader(), new Class<?>[]{beanType, Finalizable.class}, new InvocationHandler() {
+							@Override
+							public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+								if (method.getName().equals("finalize")) {
+									bean.destroy(reference, cc);
+								}
+								try {
+									return method.invoke(reference, args);
+								} catch (InvocationTargetException e) {
+									throw e.getCause();
+								}
+							}
+						});
+					} else {
+						throw new IllegalArgumentException("If the resolved bean is dependent scoped then the received beanType should be an interface in order to manage the destruction of the created dependent bean class instance.");
+					}
+				} else {
+					result = reference;
+				}
+			}
+		}
+		return result;
+	}
+
+
+	
 	public static Instance<PluggableAuthenticator> getCdiAuthenticator() {
 		Instance<PluggableAuthenticator> authenticator = CDI.current().select(PluggableAuthenticator.class, 
 				new AnnotationLiteral<Primary>() {});
 		return authenticator;
+	}
+	
+	interface Finalizable {
+
+		void finalize() throws Throwable;
 	}
 }

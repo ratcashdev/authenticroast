@@ -24,19 +24,8 @@
 package name.aikesommer.authenticator;
 
 import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
 import java.util.Map;
-import java.util.Set;
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.context.spi.CreationalContext;
-import javax.enterprise.inject.Instance;
-import javax.enterprise.inject.spi.Bean;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.enterprise.inject.spi.CDI;
 import javax.enterprise.util.AnnotationLiteral;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -53,7 +42,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import name.aikesommer.authenticator.AuthenticationRequest.ManageAction;
 import name.aikesommer.authenticator.AuthenticationRequest.Status;
-import static name.aikesommer.authenticator.CDIHelper.getInstance;
 
 
 /**
@@ -96,7 +84,8 @@ public class AuthModule extends AuthenticationManagerBase implements ServerAuthM
 	 * @return 
 	 */
 	protected PluggableAuthenticator getPrimaryAuthenticator() {
-		return CDIHelper.getInstance(PluggableAuthenticator.class, ApplicationScoped.class, new AnnotationLiteral<Primary>() {});
+//		return CDIHelper.getInstance(PluggableAuthenticator.class, ApplicationScoped.class, new AnnotationLiteral<Primary>() {});
+		return CDIHelper.getReferenceOrNull(PluggableAuthenticator.class, new AnnotationLiteral<Primary>() {});
 	}
 	
 	@Override
@@ -108,12 +97,12 @@ public class AuthModule extends AuthenticationManagerBase implements ServerAuthM
 		RegistryImpl registry = RegistryImpl.forContext(context);
 //		Instance<PluggableAuthenticator> authInstance = CDIHelper.getCdiAuthenticator();
 		
-		BeanManager beanManager = CDIHelper.getBeanManager();
-		Bean<PluggableAuthenticator> bean = (Bean<PluggableAuthenticator>) beanManager.resolve(beanManager.getBeans(PluggableAuthenticator.class, new AnnotationLiteral<Primary>() {}));
-		CreationalContext ctx = beanManager.createCreationalContext(bean);
-		PluggableAuthenticator authenticator = beanManager.getContext(ApplicationScoped.class).get(bean, ctx);
+//		BeanManager beanManager = CDIHelper.getBeanManager();
+//		Bean<PluggableAuthenticator> bean = (Bean<PluggableAuthenticator>) beanManager.resolve(beanManager.getBeans(PluggableAuthenticator.class, new AnnotationLiteral<Primary>() {}));
+//		CreationalContext ctx = beanManager.createCreationalContext(bean);
+//		PluggableAuthenticator authenticator = (PluggableAuthenticator) beanManager.getReference(bean, PluggableAuthenticator.class, ctx);
 		
-//		PluggableAuthenticator authenticator = getPrimaryAuthenticator();
+		PluggableAuthenticator authenticator = getPrimaryAuthenticator();
 		
 		
         /**
@@ -137,8 +126,8 @@ public class AuthModule extends AuthenticationManagerBase implements ServerAuthM
 //			authInstance.destroy(authenticator);
 //		}
 		
-		bean.destroy(authenticator, ctx);
-		ctx.release();
+//		bean.destroy(authenticator, ctx);
+//		 ctx.release();
 		return result;
 	}
 	
