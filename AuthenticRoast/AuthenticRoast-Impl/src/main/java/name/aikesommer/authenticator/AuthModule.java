@@ -24,7 +24,19 @@
 package name.aikesommer.authenticator;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 import java.util.Map;
+import java.util.Set;
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.spi.CreationalContext;
+import javax.enterprise.inject.Instance;
+import javax.enterprise.inject.spi.Bean;
+import javax.enterprise.inject.spi.BeanManager;
+import javax.enterprise.inject.spi.CDI;
+import javax.enterprise.util.AnnotationLiteral;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -41,6 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import name.aikesommer.authenticator.AuthenticationRequest.ManageAction;
 import name.aikesommer.authenticator.AuthenticationRequest.Status;
+import static name.aikesommer.authenticator.CDIHelper.getInstance;
 
 
 /**
@@ -76,23 +89,69 @@ public class AuthModule extends AuthenticationManagerBase implements ServerAuthM
     public Class[] getSupportedMessageTypes() {
         return null;
     }
-
+	
+	/**
+	 * Retrieves the BeanManager associated with the current ServletContext and then a reference to an @ApplicationScoped
+	 * PluggableAuthenticator.
+	 * @return 
+	 */
+	protected PluggableAuthenticator getPrimaryAuthenticator() {
+		return CDIHelper.getInstance(PluggableAuthenticator.class, ApplicationScoped.class, new AnnotationLiteral<Primary>() {});
+	}
+	
 	@Override
-    public AuthStatus validateRequest(MessageInfo info, Subject clientSubject,
+	public AuthStatus validateRequest(MessageInfo info, Subject clientSubject,
             Subject serviceSubject) throws AuthException {
+		
+		HttpServletRequest request = (HttpServletRequest) info.getRequestMessage();
+		ServletContext context = request.getSession().getServletContext();
+		RegistryImpl registry = RegistryImpl.forContext(context);
+//		Instance<PluggableAuthenticator> authInstance = CDIHelper.getCdiAuthenticator();
+		
+		BeanManager beanManager = CDIHelper.getBeanManager();
+		Bean<PluggableAuthenticator> bean = (Bean<PluggableAuthenticator>) beanManager.resolve(beanManager.getBeans(PluggableAuthenticator.class, new AnnotationLiteral<Primary>() {}));
+		CreationalContext ctx = beanManager.createCreationalContext(bean);
+		PluggableAuthenticator authenticator = beanManager.getContext(ApplicationScoped.class).get(bean, ctx);
+		
+//		PluggableAuthenticator authenticator = getPrimaryAuthenticator();
+		
+		
+        /**
+         * Find the authenticator for this application.
+         */
+//		authenticator = authInstance.get();
+		if(authenticator == null) {
+//			System.out.println("Resetting instance.");
+//			authInstance = null;
+			authenticator = registry.authenticator();
+		}
+		
+		AuthStatus result = AuthStatus.FAILURE;
+		// Reject requests, if there's no authenticator defined
+		if(authenticator != null) {
+			result = requestValidator(info, clientSubject, serviceSubject, registry, authenticator);
+		}
+		
+//		if(authInstance != null) {
+//			System.out.println("Destroying.");
+//			authInstance.destroy(authenticator);
+//		}
+		
+		bean.destroy(authenticator, ctx);
+		ctx.release();
+		return result;
+	}
+	
+	
+    protected AuthStatus requestValidator(MessageInfo info, Subject clientSubject,
+            Subject serviceSubject, RegistryImpl registry, PluggableAuthenticator authenticator) throws AuthException {
+		
         HttpServletRequest request = (HttpServletRequest) info.getRequestMessage();
         HttpServletResponse response = (HttpServletResponse) info.getResponseMessage();
-        ServletContext context = request.getSession().getServletContext();
-        RegistryImpl registry = RegistryImpl.forContext(context);
 
         JSR196Request authReq = new AuthenticationRequestImpl.JSR196(request, response,
                 clientSubject, requestPolicy.isMandatory(), registry.isCrossContext());
         registry.createPrincipalStore(authReq);
-
-        /**
-         * Find the authenticator for this application.
-         */
-        PluggableAuthenticator authenticator = registry.authenticator();
 
         boolean finished = false;
         try {
