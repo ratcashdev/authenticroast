@@ -28,8 +28,6 @@ import javax.security.auth.Subject;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.apache.catalina.connector.Request;
-import org.apache.catalina.connector.Response;
 
 
 /**
@@ -128,29 +126,4 @@ public abstract class WrappedRequest implements ModifiableRequest {
         }
 
     }
-
-    public static class Tomcat6 extends WrappedRequest implements Tomcat6Request {
-
-        private Tomcat6Request request;
-
-        public Tomcat6(ServletContext context, Tomcat6Request request) {
-            super(context);
-            this.request = request;
-        }
-
-        @Override
-        protected ModifiableRequest request() {
-            return request;
-        }
-
-        public Request getCatalinaRequest() {
-            return request.getCatalinaRequest();
-        }
-
-        public Response getCatalinaResponse() {
-            return request.getCatalinaResponse();
-        }
-
-    }
-
 }

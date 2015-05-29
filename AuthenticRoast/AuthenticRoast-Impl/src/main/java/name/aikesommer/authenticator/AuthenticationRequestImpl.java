@@ -39,7 +39,7 @@ import org.apache.catalina.connector.Response;
 
 /**
  * The class representing the request for authentication to be passed to the
- * authenticator-object in aur web-app. This basically encapsulates some 
+ * authenticator-object in our web-app. This basically encapsulates some 
  * of the involved objects for simplicity.
  * 
  * @author Aike J Sommer
@@ -50,7 +50,6 @@ public abstract class AuthenticationRequestImpl implements ModifiableRequest {
     private HttpServletRequest request;
     private boolean mandatory;
     private boolean forwarded = false;
-    private boolean crossContext;
     private Map<String, Object> authenticationMap;
 
     public AuthenticationRequestImpl(HttpServletRequest request, HttpServletResponse response,
@@ -58,9 +57,7 @@ public abstract class AuthenticationRequestImpl implements ModifiableRequest {
         this.request = request;
         this.response = response;
         this.mandatory = mandatory;
-        this.crossContext = crossContext;
-        this.authenticationMap = crossContext ? SuperSession.self(request, response, true).attributes()
-                : getSessionMap();
+        this.authenticationMap = getSessionMap();
     }
 
     protected abstract AuthenticationRequest delegate(ServletContext context);
@@ -129,14 +126,6 @@ public abstract class AuthenticationRequestImpl implements ModifiableRequest {
 
     public void setForwarded(boolean forwarded) {
         this.forwarded = forwarded;
-    }
-
-    public boolean isCrossContext() {
-        return crossContext;
-    }
-
-    public void setCrossContext(boolean b) {
-        crossContext = b;
     }
 
     /**
@@ -260,8 +249,8 @@ public abstract class AuthenticationRequestImpl implements ModifiableRequest {
         private Subject clientSubject;
 
         public JSR196(HttpServletRequest request, HttpServletResponse response,
-                Subject clientSubject, boolean mandatory, boolean crossContext) {
-            super(request, response, mandatory, crossContext);
+                Subject clientSubject, boolean mandatory) {
+            super(request, response, mandatory, false);
             this.clientSubject = clientSubject;
         }
 
@@ -277,32 +266,6 @@ public abstract class AuthenticationRequestImpl implements ModifiableRequest {
         @Override
         protected JSR196Request delegate(ServletContext context) {
             return new WrappedRequest.JSR196(context, this);
-        }
-
-    }
-
-    public static class Tomcat6 extends AuthenticationRequestImpl implements Tomcat6Request {
-
-        private Request catalinaRequest;
-        private Response catalinaResponse;
-
-        public Tomcat6(Request request, Response response, boolean mandatory, boolean crossContext) {
-            super(request.getRequest(), response.getResponse(), mandatory, crossContext);
-            this.catalinaRequest = request;
-            this.catalinaResponse = response;
-        }
-
-        public Request getCatalinaRequest() {
-            return catalinaRequest;
-        }
-
-        public Response getCatalinaResponse() {
-            return catalinaResponse;
-        }
-
-        @Override
-        protected Tomcat6Request delegate(ServletContext context) {
-            return new WrappedRequest.Tomcat6(context, this);
         }
 
     }

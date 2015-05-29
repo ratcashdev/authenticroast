@@ -63,6 +63,7 @@ public class CDIHelper {
 //			Bean<T> bean = (Bean<T>) beanManager.resolve(beanManager.getBeans(beanClass, qualifier));
 //			return (T) beanManager.getReference(bean, beanClass, beanManager.createCreationalContext(bean));
 		} catch (Exception e) {
+			e.printStackTrace();
 			return null;
 		}
 	}

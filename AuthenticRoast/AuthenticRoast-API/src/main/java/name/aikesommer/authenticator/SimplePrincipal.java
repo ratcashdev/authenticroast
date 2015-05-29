@@ -28,8 +28,6 @@ import java.security.Principal;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 
 /**
  * A very simple approach to returning a principal together with its 
@@ -41,42 +39,6 @@ import javax.servlet.http.HttpSession;
 public class SimplePrincipal implements Principal, Serializable {
 	public static final long	serialVersionUID = 1L;
 
-    /**
-     * Use this to access the current authenticated principal, if you need
-     * access to any of the information in your sub-class.
-     *
-     * @deprecated
-     * @param session The current session as in HttpServletRequest.getSession()
-     * @return The previously authenticated SimplePrincipal instance for this
-     *         session.
-     */
-    public static SimplePrincipal getPrincipal(HttpSession session) {
-        return Registry.forContext(session.getServletContext()).principalStore().fetch();
-    }
-
-    /**
-     * Use this to access the current authenticated principal, if you need
-     * access to any of the information in your sub-class.
-     *
-     * @param request The current HttpServletRequest
-     * @return The previously authenticated SimplePrincipal instance for this
-     *         session.
-     */
-    public static SimplePrincipal getPrincipal(HttpServletRequest request) {
-        return Registry.forContext(request.getSession().getServletContext()).principalStore().fetch();
-    }
-
-    /**
-     * Use this to store an authenticated principal from within your application.
-     *
-     * @param request The current HttpServletRequest
-     * @param principal The authenticated SimplePrincipal
-     */
-    public static void setPrincipal(HttpServletRequest request, SimplePrincipal principal) {
-        Registry.forContext(request.getSession().getServletContext()).principalStore().store(principal);
-    }
-
-    
     private String name;
     private Set<String> groups = new HashSet();
 

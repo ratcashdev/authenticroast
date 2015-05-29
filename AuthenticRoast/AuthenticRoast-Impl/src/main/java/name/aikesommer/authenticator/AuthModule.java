@@ -25,6 +25,7 @@ package name.aikesommer.authenticator;
 
 import java.io.IOException;
 import java.util.Map;
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
@@ -50,7 +51,7 @@ import name.aikesommer.authenticator.AuthenticationRequest.Status;
  * 
  * @author Aike J Sommer
  */
-public class AuthModule extends AuthenticationManagerBase implements ServerAuthModule,
+public abstract class AuthModule extends AuthenticationManagerBase implements ServerAuthModule,
         PluggableAuthenticator.AuthenticationManager {
 
     private CallbackHandler handler;
@@ -83,18 +84,15 @@ public class AuthModule extends AuthenticationManagerBase implements ServerAuthM
 	 * PluggableAuthenticator.
 	 * @return 
 	 */
-	protected PluggableAuthenticator getPrimaryAuthenticator() {
+	protected abstract PluggableAuthenticator getPrimaryAuthenticator();
+//	{
 //		return CDIHelper.getInstance(PluggableAuthenticator.class, ApplicationScoped.class, new AnnotationLiteral<Primary>() {});
-		return CDIHelper.getReferenceOrNull(PluggableAuthenticator.class, new AnnotationLiteral<Primary>() {});
-	}
+//		return CDIHelper.getReferenceOrNull(PluggableAuthenticator.class, new AnnotationLiteral<Primary>() {});
+//	}
 	
 	@Override
-	public AuthStatus validateRequest(MessageInfo info, Subject clientSubject,
-            Subject serviceSubject) throws AuthException {
+	public AuthStatus validateRequest(MessageInfo info, Subject clientSubject, Subject serviceSubject) throws AuthException {
 		
-		HttpServletRequest request = (HttpServletRequest) info.getRequestMessage();
-		ServletContext context = request.getSession().getServletContext();
-		RegistryImpl registry = RegistryImpl.forContext(context);
 //		Instance<PluggableAuthenticator> authInstance = CDIHelper.getCdiAuthenticator();
 		
 //		BeanManager beanManager = CDIHelper.getBeanManager();
@@ -102,23 +100,25 @@ public class AuthModule extends AuthenticationManagerBase implements ServerAuthM
 //		CreationalContext ctx = beanManager.createCreationalContext(bean);
 //		PluggableAuthenticator authenticator = (PluggableAuthenticator) beanManager.getReference(bean, PluggableAuthenticator.class, ctx);
 		
+		System.out.println("Retrieving main CDI bean.");
 		PluggableAuthenticator authenticator = getPrimaryAuthenticator();
-		
+		System.out.println("Retrieved: " + authenticator);
 		
         /**
          * Find the authenticator for this application.
          */
 //		authenticator = authInstance.get();
-		if(authenticator == null) {
-//			System.out.println("Resetting instance.");
-//			authInstance = null;
-			authenticator = registry.authenticator();
-		}
+//		if(authenticator == null) {
+////			System.out.println("Resetting instance.");
+////			authInstance = null;
+//			System.out.println("Authenticator is null. Trying manual lookup.");
+//			authenticator = registry.authenticator();
+//		}
 		
 		AuthStatus result = AuthStatus.FAILURE;
 		// Reject requests, if there's no authenticator defined
 		if(authenticator != null) {
-			result = requestValidator(info, clientSubject, serviceSubject, registry, authenticator);
+			result = requestValidator(info, clientSubject, serviceSubject, authenticator);
 		}
 		
 //		if(authInstance != null) {
@@ -133,14 +133,15 @@ public class AuthModule extends AuthenticationManagerBase implements ServerAuthM
 	
 	
     protected AuthStatus requestValidator(MessageInfo info, Subject clientSubject,
-            Subject serviceSubject, RegistryImpl registry, PluggableAuthenticator authenticator) throws AuthException {
+            Subject serviceSubject, PluggableAuthenticator authenticator) throws AuthException {
 		
         HttpServletRequest request = (HttpServletRequest) info.getRequestMessage();
         HttpServletResponse response = (HttpServletResponse) info.getResponseMessage();
 
+		boolean mandatory = true;
+//		mandatory = requestPolicy.isMandatory();
         JSR196Request authReq = new AuthenticationRequestImpl.JSR196(request, response,
-                clientSubject, requestPolicy.isMandatory(), registry.isCrossContext());
-        registry.createPrincipalStore(authReq);
+                clientSubject, mandatory);
 
         boolean finished = false;
         try {
@@ -153,7 +154,7 @@ public class AuthModule extends AuthenticationManagerBase implements ServerAuthM
              * We will call manage() in our authenticator to be able to logout
              * and such things.
              */
-            SimplePrincipal simplePrincipal = registry.principalStore().fetch();
+            SimplePrincipal simplePrincipal = getPrincipalStore().fetch();
             if (simplePrincipal != null) {
                 ManageAction action = authenticator.manage(this, authReq);
                 switch (action) {
@@ -162,7 +163,7 @@ public class AuthModule extends AuthenticationManagerBase implements ServerAuthM
                         success = true;
                         return AuthStatus.SUCCESS;
                     case Clear:
-                        registry.principalStore().invalidate();
+                        getPrincipalStore().invalidate();
                         return AuthStatus.SEND_CONTINUE;
                 }
             }
@@ -179,7 +180,7 @@ public class AuthModule extends AuthenticationManagerBase implements ServerAuthM
                     success = true;
                     return AuthStatus.SUCCESS;
                 case None:
-                    if (!requestPolicy.isMandatory()) {
+                    if (!mandatory) {
                         success = true;
                         return AuthStatus.SUCCESS;
                     }
@@ -250,5 +251,4 @@ public class AuthModule extends AuthenticationManagerBase implements ServerAuthM
         }
         super.register(request, simplePrincipal);
     }
-
 }

@@ -23,7 +23,8 @@
  */
 package name.aikesommer.authenticator;
 
-import javax.servlet.http.HttpSession;
+import java.io.Serializable;
+import javax.enterprise.context.SessionScoped;
 
 /**
  * This is the default principal-store, which will store principals in the
@@ -31,27 +32,25 @@ import javax.servlet.http.HttpSession;
  *
  * @author Aike J Sommer
  */
-public class DefaultPrincipalStore implements PrincipalStore {
+@SessionScoped
+public class DefaultPrincipalStore implements PrincipalStore, Serializable {
+	private static final long serialVersionUID = -6118361516136654899L;
+	
+	SimplePrincipal principal;
 
-    private static final String PRINCIPAL_NOTE = "name.aikesommer.Authenticator.PRINCIPAL";
-
-    private HttpSession session;
-
-    public DefaultPrincipalStore(HttpSession session) {
-        this.session = session;
-    }
-
+	@Override
     public void store(SimplePrincipal principal) {
-        session.setAttribute(PRINCIPAL_NOTE, principal);
+        this.principal = principal;
     }
 
+	@Override
     public SimplePrincipal fetch() {
-        return (SimplePrincipal) session.getAttribute(PRINCIPAL_NOTE);
+        return principal;
     }
 
+	@Override
     public void invalidate() {
-        session.removeAttribute(PRINCIPAL_NOTE);
-        session.invalidate();
+        principal = null;
     }
 
 }

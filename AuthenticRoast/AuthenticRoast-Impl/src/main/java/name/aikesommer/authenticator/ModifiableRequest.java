@@ -34,8 +34,6 @@ public interface ModifiableRequest extends AuthenticationRequest {
 
     boolean isForwarded();
     void setForwarded(boolean b);
-    boolean isCrossContext();
-    void setCrossContext(boolean b);
     ServletContext getOriginalContext();
 
 }

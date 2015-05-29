@@ -32,7 +32,7 @@ import javax.servlet.ServletContext;
  *
  * @author Aike J Sommer
  */
-public class AuthenticationManagerBase implements PluggableAuthenticator.AuthenticationManager {
+public abstract class AuthenticationManagerBase implements PluggableAuthenticator.AuthenticationManager {
 
     protected static final Logger log = Logger.getLogger(AuthenticationManagerBase.class.getName());
 
@@ -81,7 +81,7 @@ public class AuthenticationManagerBase implements PluggableAuthenticator.Authent
     }
 
     public void register(AuthenticationRequest request, SimplePrincipal simplePrincipal) {
-        RegistryImpl.forContext(request.getServletContext()).principalStore().store(simplePrincipal);
+        getPrincipalStore().store(simplePrincipal);
     }
 
     public void restoreRequest(AuthenticationRequest request) {
@@ -106,5 +106,6 @@ public class AuthenticationManagerBase implements PluggableAuthenticator.Authent
     public void addQueryString(AuthenticationRequest request, String queryString) {
         requestHandler.addQueryString(request, queryString);
     }
-
+	
+	protected abstract PrincipalStore getPrincipalStore();
 }
